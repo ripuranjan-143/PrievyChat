@@ -115,4 +115,24 @@ const allUsers = async (req, res) => {
   });
 };
 
-export { signup, login, allUsers };
+const getUserById = async (req, res) => {
+  // only allow the logged-in user to access their own data
+  if (req.user.id !== req.params.id) {
+    throw new ExpressError(
+      StatusCodes.FORBIDDEN,
+      'You are not authorized to access this user'
+    );
+  }
+  // fetch user without password
+  const user = await User.findById(req.params.id).select('-password');
+  if (!user) {
+    throw new ExpressError(StatusCodes.NOT_FOUND, 'User not found');
+  }
+  // send response
+  res.status(StatusCodes.OK).json({
+    success: true,
+    user,
+  });
+};
+
+export { signup, login, allUsers, getUserById };

@@ -5,8 +5,13 @@ import {
   signup,
   login,
   allUsers,
+  getUserById,
 } from '../controllers/UserController.js';
-import { signupSchema, loginSchema } from '../utils/Schema.js';
+import {
+  signupSchema,
+  loginSchema,
+  getUserByIdSchema,
+} from '../utils/Schema.js';
 import { validateSchema } from '../utils/ValidateSchema.js';
 import { verifyToken } from '../utils/AuthMiddleware.js';
 
@@ -28,5 +33,13 @@ userRouter.post(
 
 // get all users except logged-in user
 userRouter.get('/', verifyToken, wrapAsync(allUsers));
+
+// get user details by ID
+userRouter.get(
+  '/:id',
+  verifyToken,
+  validateSchema(getUserByIdSchema),
+  wrapAsync(getUserById)
+);
 
 export { userRouter };

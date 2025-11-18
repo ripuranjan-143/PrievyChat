@@ -13,7 +13,13 @@ const passwordField = Joi.string().min(4).trim().messages({
   'string.min': 'Password must be at least 4 characters long',
 });
 
-// Signup schema
+const idField = Joi.string().length(24).hex().required().messages({
+  'string.length': 'User ID must be 24 characters long',
+  'string.hex': 'User ID must be a valid hexadecimal',
+  'any.required': 'User ID is required',
+});
+
+// signup schema
 const signupSchema = Joi.object({
   body: Joi.object({
     name: nameField.required(),
@@ -22,7 +28,7 @@ const signupSchema = Joi.object({
   }).required(),
 });
 
-// Login schema
+// login schema
 const loginSchema = Joi.object({
   body: Joi.object({
     email: emailField.required(),
@@ -30,4 +36,11 @@ const loginSchema = Joi.object({
   }).required(),
 });
 
-export { signupSchema, loginSchema };
+// get user by ID schema
+const getUserByIdSchema = Joi.object({
+  params: Joi.object({
+    id: idField,
+  }).required(),
+});
+
+export { signupSchema, loginSchema, getUserByIdSchema };
