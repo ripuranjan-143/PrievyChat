@@ -1,0 +1,25 @@
+# Ignore ALL node_modules everywhere
+node_modules/
+
+# Ignore ALL .env files everywhere
+.env
+*.env
+
+# Logs
+*.log
+
+# Build folders
+dist/
+build/
+
+# OS/Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Vite cache (Frontend)
+.vite/
+
+# Upload folders (Backend)
+uploads/
