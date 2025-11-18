@@ -6,11 +6,13 @@ import {
   login,
   allUsers,
   getUserById,
+  deleteUserById,
 } from '../controllers/UserController.js';
 import {
   signupSchema,
   loginSchema,
   getUserByIdSchema,
+  deleteUserByIdSchema,
 } from '../utils/Schema.js';
 import { validateSchema } from '../utils/ValidateSchema.js';
 import { verifyToken } from '../utils/AuthMiddleware.js';
@@ -40,6 +42,14 @@ userRouter.get(
   verifyToken,
   validateSchema(getUserByIdSchema),
   wrapAsync(getUserById)
+);
+
+// delete user by ID
+userRouter.delete(
+  '/:id',
+  verifyToken,
+  validateSchema(deleteUserByIdSchema),
+  wrapAsync(deleteUserById)
 );
 
 export { userRouter };

@@ -1,5 +1,7 @@
 import { StatusCodes } from 'http-status-codes';
 import { User } from '../models/UserModel.js';
+import { Chat } from '../models/ChatModel.js';
+import { Message } from '../models/MessageModel.js';
 import { ExpressError } from '../utils/ExpressError.js';
 import {
   hashPassword,
@@ -25,7 +27,7 @@ const signup = async (req, res) => {
   // create user object
   const newUser = new User({
     name,
-    email,
+    email: email.toLowerCase(),
     password: hashedPassword,
     picture,
   });
@@ -135,4 +137,42 @@ const getUserById = async (req, res) => {
   });
 };
 
-export { signup, login, allUsers, getUserById };
+const deleteUserById = async (req, res) => {
+  // only allow logged-in user to delete their own account
+  if (req.user.id !== req.params.id) {
+    throw new ExpressError(
+      StatusCodes.FORBIDDEN,
+      'You are not authorized to access this user'
+    );
+  }
+
+  // find the user
+  const user = await User.findById(req.params.id);
+  if (!user) {
+    throw new ExpressError(StatusCodes.NOT_FOUND, 'User not found');
+  }
+
+  // delete all messages sent by the user
+  await Message.deleteMany({ sender: req.user.id });
+
+  // remove user from all chats
+  await Chat.updateMany(
+    { users: req.user.id },
+    { $pull: { users: req.user.id } }
+  );
+
+  // optionally delete chats with no users left
+  await Chat.deleteMany({ users: { $size: 0 } });
+
+  // delete the user
+  await User.findByIdAndDelete(req.user.id);
+
+  // send response
+  res.status(StatusCodes.OK).json({
+    success: true,
+    message:
+      'User and all related chats/messages deleted successfully',
+  });
+};
+
+export { signup, login, allUsers, getUserById, deleteUserById };

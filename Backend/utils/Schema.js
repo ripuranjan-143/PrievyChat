@@ -43,4 +43,16 @@ const getUserByIdSchema = Joi.object({
   }).required(),
 });
 
-export { signupSchema, loginSchema, getUserByIdSchema };
+// delete user by ID schema
+const deleteUserByIdSchema = Joi.object({
+  params: Joi.object({
+    id: idField,
+  }).required(),
+});
+
+export {
+  signupSchema,
+  loginSchema,
+  getUserByIdSchema,
+  deleteUserByIdSchema,
+};
