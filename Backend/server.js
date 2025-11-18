@@ -4,19 +4,23 @@ import cors from 'cors';
 import { StatusCodes } from 'http-status-codes';
 
 import Config from './utils/Config.js';
-import ExpressError from './utils/ExpressError.js';
+import { ExpressError  } from './utils/ExpressError.js';
+import { mainRouter } from './routes/MainRouter.js';
 
 const app = express();
 
-// parse incoming JSON request bodies
+// middleware to parse JSON request bodies
 app.use(express.json());
 
-// allow frontend to communicate with backend
+// enable CORS so frontend can communicate with backend
 app.use(cors());
+
+// routes
+app.use('/api/v1', mainRouter);
 
 // route not found handler
 app.use((req, res, next) => {
-  next(new ExpressError(StatusCodes.NOT_FOUND, 'Page Not Found'));
+  next(new ExpressError (StatusCodes.NOT_FOUND, 'Page Not Found'));
 });
 
 // global error handler
@@ -33,7 +37,7 @@ app.use((err, req, res, next) => {
   res.status(statusCode).json({ success: false, message });
 });
 
-// start the server and connect mongodb
+// connect to MongoDB and start the server
 const start = async () => {
   try {
     await mongoose.connect(Config.mongoUri);
