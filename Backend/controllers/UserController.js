@@ -1,9 +1,12 @@
 import { StatusCodes } from 'http-status-codes';
 import { User } from '../models/UserModel.js';
 import { ExpressError } from '../utils/ExpressError.js';
-import { hashPassword, genToken, comparePassword } from '../utils/AuthHelper.js';
+import {
+  hashPassword,
+  genToken,
+  comparePassword,
+} from '../utils/AuthHelper.js';
 
-// controller: create a new user account
 const signup = async (req, res) => {
   const { name, email, password, picture } = req.body;
 
@@ -82,4 +85,34 @@ const login = async (req, res) => {
   });
 };
 
-export { signup, login };
+const allUsers = async (req, res) => {
+  // if a search query exists, build a mongodb or filter for name/email (case-insensitive)
+  const keyword = req.query.search
+    ? {
+        $or: [
+          { name: { $regex: req.query.search, $options: 'i' } },
+          { email: { $regex: req.query.search, $options: 'i' } },
+        ],
+      }
+    : {};
+
+  // fetch all users matching the search filter, excluding the logged-in user
+  const users = await User.find(keyword).find({
+    _id: { $ne: req.user.id },
+  });
+
+  // remove password field from each user before sending the response
+  const cleanUsers = users.map((user) => {
+    const obj = user.toObject();
+    delete obj.password;
+    return obj;
+  });
+
+  // send clean user list to the frontend
+  return res.status(StatusCodes.OK).json({
+    success: true,
+    users: cleanUsers,
+  });
+};
+
+export { signup, login, allUsers };
