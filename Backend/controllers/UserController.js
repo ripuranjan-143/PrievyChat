@@ -1,7 +1,7 @@
 import { StatusCodes } from 'http-status-codes';
 import { User } from '../models/UserModel.js';
-import { ExpressError  } from '../utils/ExpressError.js';
-import { hashPassword, genToken } from '../utils/AuthHelper.js';
+import { ExpressError } from '../utils/ExpressError.js';
+import { hashPassword, genToken, comparePassword } from '../utils/AuthHelper.js';
 
 // controller: create a new user account
 const signup = async (req, res) => {
@@ -10,7 +10,7 @@ const signup = async (req, res) => {
   // check if email already exists
   const existingUser = await User.findOne({ email });
   if (existingUser) {
-    throw new ExpressError (
+    throw new ExpressError(
       StatusCodes.CONFLICT,
       'Email is already used, try different email'
     );
@@ -46,4 +46,40 @@ const signup = async (req, res) => {
   });
 };
 
-export { signup };
+const login = async (req, res) => {
+  const { email, password } = req.body;
+
+  // check if user exists
+  const user = await User.findOne({ email: email.toLowerCase() });
+  if (!user) {
+    throw new ExpressError(
+      StatusCodes.UNAUTHORIZED,
+      'Invalid email or password'
+    );
+  }
+
+  // match password
+  const isMatched = await comparePassword(password, user.password);
+  if (!isMatched) {
+    throw new ExpressError(
+      StatusCodes.UNAUTHORIZED,
+      'Invalid email or password'
+    );
+  }
+
+  // generate token
+  const token = genToken(user._id);
+
+  // prepare response
+  const userResponse = user.toObject();
+  delete userResponse.password;
+
+  res.status(StatusCodes.OK).json({
+    success: true,
+    message: 'User logged in successfully',
+    ...userResponse,
+    token,
+  });
+};
+
+export { signup, login };

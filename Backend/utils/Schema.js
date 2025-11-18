@@ -13,7 +13,7 @@ const passwordField = Joi.string().min(4).trim().messages({
   'string.min': 'Password must be at least 4 characters long',
 });
 
-// ✅ Signup schema
+// Signup schema
 const signupSchema = Joi.object({
   body: Joi.object({
     name: nameField.required(),
@@ -22,4 +22,12 @@ const signupSchema = Joi.object({
   }).required(),
 });
 
-export { signupSchema };
+// Login schema
+const loginSchema = Joi.object({
+  body: Joi.object({
+    email: emailField.required(),
+    password: passwordField.required(),
+  }).required(),
+});
+
+export { signupSchema, loginSchema };

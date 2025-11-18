@@ -15,4 +15,8 @@ const genToken = (id) => {
   });
 };
 
-export { hashPassword, genToken };
+const comparePassword = (enteredPassword, storedPassword) => {
+  return bcrypt.compare(enteredPassword, storedPassword);
+};
+
+export { hashPassword, genToken, comparePassword };
