@@ -50,9 +50,17 @@ const deleteUserByIdSchema = Joi.object({
   }).required(),
 });
 
+// create/access chat schema
+const oneToOneChatSchema = Joi.object({
+  body: Joi.object({
+    userId: idField.required(),
+  }).required(),
+});
+
 export {
   signupSchema,
   loginSchema,
   getUserByIdSchema,
   deleteUserByIdSchema,
+  oneToOneChatSchema,
 };

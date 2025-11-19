@@ -21,10 +21,8 @@ const signup = async (req, res) => {
     );
   }
 
-  // hash password before saving
   const hashedPassword = await hashPassword(password);
 
-  // create user object
   const newUser = new User({
     name,
     email: email.toLowerCase(),
@@ -32,17 +30,13 @@ const signup = async (req, res) => {
     picture,
   });
 
-  // save user to database
   const savedUser = await newUser.save();
-
-  // generate JWT token
   const token = genToken(savedUser._id);
 
   // remove password from output
   const userResponse = savedUser.toObject();
   delete userResponse.password;
 
-  // send success response
   res.status(StatusCodes.CREATED).json({
     success: true,
     message: 'User created successfully',
@@ -72,7 +66,6 @@ const login = async (req, res) => {
     );
   }
 
-  // generate token
   const token = genToken(user._id);
 
   // prepare response
@@ -110,7 +103,6 @@ const allUsers = async (req, res) => {
     return obj;
   });
 
-  // send clean user list to the frontend
   return res.status(StatusCodes.OK).json({
     success: true,
     users: cleanUsers,
@@ -130,7 +122,7 @@ const getUserById = async (req, res) => {
   if (!user) {
     throw new ExpressError(StatusCodes.NOT_FOUND, 'User not found');
   }
-  // send response
+
   res.status(StatusCodes.OK).json({
     success: true,
     user,
@@ -167,7 +159,6 @@ const deleteUserById = async (req, res) => {
   // delete the user
   await User.findByIdAndDelete(req.user.id);
 
-  // send response
   res.status(StatusCodes.OK).json({
     success: true,
     message:
