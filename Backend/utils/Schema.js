@@ -57,10 +57,29 @@ const oneToOneChatSchema = Joi.object({
   }).required(),
 });
 
+//  create group chat schema
+const createGroupChatSchema = Joi.object({
+  body: Joi.object({
+    name: nameField.required().messages({
+      'string.empty': 'Group name is required',
+    }),
+    users: Joi.array()
+      .items(idField)
+      .min(2) // minimum 2 users from frontend
+      .required()
+      .messages({
+        'array.min':
+          'At least 2 users are required to create a group chat',
+        'array.base': 'Users must be an array of user IDs',
+      }),
+  }).required(),
+});
+
 export {
   signupSchema,
   loginSchema,
   getUserByIdSchema,
   deleteUserByIdSchema,
   oneToOneChatSchema,
+  createGroupChatSchema,
 };

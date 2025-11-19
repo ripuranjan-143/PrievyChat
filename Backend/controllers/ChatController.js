@@ -65,4 +65,27 @@ const getUserChats = async (req, res) => {
   res.status(StatusCodes.OK).send(chats);
 };
 
-export { getOrCreateOneToOneChat, getUserChats };
+const createNewGroupChat = async (req, res) => {
+  const { users, name } = req.body;
+
+  // users array comes from frontend (at least 2 users)
+  const groupUsers = [...users, req.user.id]; // add logged-in user
+
+  // Create the group chat
+  const groupChat = await Chat.create({
+    chatName: name,
+    users: groupUsers,
+    isGroupChat: true,
+    groupAdmin: req.user.id,
+  });
+
+  // Populate users and group admin for response
+  const fullGroupChat = await Chat.findById(groupChat._id)
+    .populate('users', '-password')
+    .populate('groupAdmin', '-password')
+    .lean();
+
+  res.status(StatusCodes.CREATED).json(fullGroupChat);
+};
+
+export { getOrCreateOneToOneChat, getUserChats, createNewGroupChat };
