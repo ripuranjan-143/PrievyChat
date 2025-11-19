@@ -67,25 +67,105 @@ const getUserChats = async (req, res) => {
 
 const createNewGroupChat = async (req, res) => {
   const { users, name } = req.body;
+  const loggedInUserId = req.user.id;
 
-  // users array comes from frontend (at least 2 users)
-  const groupUsers = [...users, req.user.id]; // add logged-in user
+  // users array comes from frontend
+  let finalUsers = [...users];
+
+  // add logged-in user if missing
+  if (!finalUsers.includes(loggedInUserId)) {
+    finalUsers.push(loggedInUserId);
+  }
+
+  // Ensure at least 3 total (admin + 2 members)
+  if (finalUsers.length < 3) {
+    throw new ExpressError(
+      StatusCodes.BAD_REQUEST,
+      'A group must have at least 2 other members'
+    );
+  }
+
+  // Validate all users exist
+  const foundUsers = await User.find({
+    _id: { $in: finalUsers },
+  }).select('_id');
+
+  if (foundUsers.length !== finalUsers.length) {
+    throw new ExpressError(
+      StatusCodes.BAD_REQUEST,
+      'One or more selected users do not exist'
+    );
+  }
 
   // Create the group chat
   const groupChat = await Chat.create({
-    chatName: name,
-    users: groupUsers,
+    chatName: name.trim(),
+    users: finalUsers,
     isGroupChat: true,
-    groupAdmin: req.user.id,
+    groupAdmin: loggedInUserId,
   });
 
-  // Populate users and group admin for response
+  // Populate before sending response
   const fullGroupChat = await Chat.findById(groupChat._id)
     .populate('users', '-password')
     .populate('groupAdmin', '-password')
     .lean();
 
-  res.status(StatusCodes.CREATED).json(fullGroupChat);
+  return res.status(StatusCodes.CREATED).json(fullGroupChat);
 };
 
-export { getOrCreateOneToOneChat, getUserChats, createNewGroupChat };
+const updateGroupChatName = async (req, res) => {
+  const { chatId, chatName } = req.body;
+
+  // fetch chat with minimal fields
+  const chat = await Chat.findById(chatId).select(
+    'isGroupChat groupAdmin chatName'
+  );
+
+  if (!chat) {
+    throw new ExpressError(StatusCodes.NOT_FOUND, 'Chat not found');
+  }
+
+  // only rename group chats
+  if (!chat.isGroupChat) {
+    throw new ExpressError(
+      StatusCodes.BAD_REQUEST,
+      'You can rename only group chats'
+    );
+  }
+
+  // validate admin
+  if (chat.groupAdmin.toString() !== req.user.id) {
+    throw new ExpressError(
+      StatusCodes.FORBIDDEN,
+      'Only the group admin can rename the group'
+    );
+  }
+
+  // check if new name is same as old one
+  const newName = chatName.trim();
+  if (chat.chatName === newName) {
+    throw new ExpressError(
+      StatusCodes.BAD_REQUEST,
+      'New name must be different'
+    );
+  }
+
+  //  update & populate
+  const updatedChat = await Chat.findByIdAndUpdate(
+    chatId,
+    { chatName: newName },
+    { new: true }
+  )
+    .populate('users', '-password')
+    .populate('groupAdmin', '-password');
+
+  return res.status(StatusCodes.OK).json(updatedChat);
+};
+
+export {
+  getOrCreateOneToOneChat,
+  getUserChats,
+  createNewGroupChat,
+  updateGroupChatName,
+};

@@ -4,24 +4,26 @@ import { verifyToken } from '../utils/AuthMiddleware.js';
 import {
   oneToOneChatSchema,
   createGroupChatSchema,
+  updateGroupChatSchema,
 } from '../utils/Schema.js';
 import { validateSchema } from '../utils/ValidateSchema.js';
 import {
   getOrCreateOneToOneChat,
   getUserChats,
   createNewGroupChat,
+  updateGroupChatName,
 } from '../controllers/ChatController.js';
 const chatRouter = express.Router();
 
-// create/access 1:1 chat
+// create/get one-to-one chat
 chatRouter.post(
-  '/',
+  '/one-to-one',
   verifyToken,
   validateSchema(oneToOneChatSchema),
   wrapAsync(getOrCreateOneToOneChat)
 );
 
-// get all chats of the logged in user
+// get all user chats
 chatRouter.get('/', verifyToken, wrapAsync(getUserChats));
 
 // create a new group chat
@@ -30,6 +32,14 @@ chatRouter.post(
   verifyToken,
   validateSchema(createGroupChatSchema),
   wrapAsync(createNewGroupChat)
+);
+
+// rename a group chat
+chatRouter.put(
+  '/group/rename',
+  verifyToken,
+  validateSchema(updateGroupChatSchema),
+  wrapAsync(updateGroupChatName)
 );
 
 export { chatRouter };
