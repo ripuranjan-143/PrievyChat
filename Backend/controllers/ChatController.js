@@ -6,48 +6,63 @@ import { StatusCodes } from 'http-status-codes';
 const getOrCreateOneToOneChat = async (req, res) => {
   const { userId } = req.body;
 
-  // Check if a 1-to-1 chat already exists, sorted by most recent
-  let chat = await Chat.find({
-    isGroupChat: false,
-    $and: [
-      { users: { $elemMatch: { $eq: req.user.id } } },
-      { users: { $elemMatch: { $eq: userId } } },
-    ],
-  })
-    .sort({ updatedAt: -1 }) // most recent chat first
-    .populate('users', '-password')
-    .populate({
-      path: 'latestMessage',
-      populate: {
-        path: 'sender',
-        select: 'name email picture',
-      },
-    });
-
-  if (chat.length > 0) {
-    return res.status(StatusCodes.OK).send(chat[0]);
-  }
-
   // Ensure target user exists
-  const targetUser = await User.findById(userId);
+  const targetUser = await User.findById(userId).lean();
   if (!targetUser) {
     throw new ExpressError(StatusCodes.NOT_FOUND, 'User not found');
   }
 
-  // Create a new 1-to-1 chat
-  const newChat = await Chat.create({
+  // Try to find existing 1-to-1 chat
+  let chat = await Chat.findOne({
+    isGroupChat: false,
+    users: { $all: [req.user.id, userId] },
+  })
+    .populate('users', '-password')
+    .populate({
+      path: 'latestMessage',
+      populate: { path: 'sender', select: 'name email picture' },
+    })
+    .lean();
+
+  if (chat) {
+    return res.status(StatusCodes.OK).send(chat);
+  }
+
+  // Create new 1-to-1 chat
+  const newChatData = {
     chatName: targetUser.name,
     isGroupChat: false,
     users: [req.user.id, userId],
-  });
+  };
 
-  // Populate the new chat with user details
-  const fullChat = await Chat.findById(newChat._id).populate(
-    'users',
-    '-password'
-  );
+  const newChat = await Chat.create(newChatData);
+
+  // Populate the newly created chat
+  const fullChat = await Chat.findById(newChat._id)
+    .populate('users', '-password')
+    .populate({
+      path: 'latestMessage',
+      populate: { path: 'sender', select: 'name email picture' },
+    })
+    .lean();
 
   res.status(StatusCodes.CREATED).send(fullChat);
 };
 
-export { getOrCreateOneToOneChat };
+const getUserChats = async (req, res) => {
+  let chats = await Chat.find({
+    users: { $elemMatch: { $eq: req.user.id } },
+  })
+    .populate('users', '-password')
+    .populate('groupAdmin', '-password')
+    .populate({
+      path: 'latestMessage',
+      populate: { path: 'sender', select: 'name email picture' },
+    })
+    .sort({ updatedAt: -1 })
+    .lean();
+
+  res.status(StatusCodes.OK).send(chats);
+};
+
+export { getOrCreateOneToOneChat, getUserChats };
