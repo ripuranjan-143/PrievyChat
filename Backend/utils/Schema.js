@@ -90,6 +90,22 @@ const updateGroupChatSchema = Joi.object({
   }).required(),
 });
 
+// add a user to a group
+const addUserToGroupSchema = Joi.object({
+  body: Joi.object({
+    chatId: idField.required(),
+    userId: idField.required(),
+  }).required(),
+});
+
+// remove a user from a group
+const removeUserFromGroupSchema = Joi.object({
+  body: Joi.object({
+    chatId: idField.required(),
+    userId: idField.required(),
+  }).required(),
+});
+
 export {
   signupSchema,
   loginSchema,
@@ -98,4 +114,6 @@ export {
   oneToOneChatSchema,
   createGroupChatSchema,
   updateGroupChatSchema,
+  addUserToGroupSchema,
+  removeUserFromGroupSchema,
 };

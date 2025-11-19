@@ -163,9 +163,128 @@ const updateGroupChatName = async (req, res) => {
   return res.status(StatusCodes.OK).json(updatedChat);
 };
 
+const addUserToGroupChat = async (req, res) => {
+  const { chatId, userId } = req.body;
+
+  // verify chat
+  const chat = await Chat.findById(chatId).select(
+    'isGroupChat groupAdmin users'
+  );
+  if (!chat) {
+    throw new ExpressError(StatusCodes.NOT_FOUND, 'Chat not found');
+  }
+
+  // add user only in a group
+  if (!chat.isGroupChat) {
+    throw new ExpressError(
+      StatusCodes.BAD_REQUEST,
+      'You can add users only in group chats'
+    );
+  }
+
+  // only admin can add users
+  if (chat.groupAdmin.toString() !== req.user.id) {
+    throw new ExpressError(
+      StatusCodes.FORBIDDEN,
+      'Only the group admin can add users'
+    );
+  }
+
+  // check if user exists
+  const userExists = await User.findById(userId).select('_id');
+  if (!userExists) {
+    throw new ExpressError(
+      StatusCodes.NOT_FOUND,
+      'User does not exist'
+    );
+  }
+
+  // prevent adding same user again
+  if (chat.users.map((u) => u.toString()).includes(userId)) {
+    throw new ExpressError(
+      StatusCodes.BAD_REQUEST,
+      'User is already in the group'
+    );
+  }
+
+  // add user
+  const updatedChat = await Chat.findByIdAndUpdate(
+    chatId,
+    { $addToSet: { users: userId } },
+    { new: true }
+  )
+    .populate('users', '-password')
+    .populate('groupAdmin', '-password');
+
+  return res.status(StatusCodes.OK).json(updatedChat);
+};
+
+const removeUserFromGroupChat = async (req, res) => {
+  const { chatId, userId } = req.body;
+
+  // verify chat
+  const chat = await Chat.findById(chatId).select(
+    'isGroupChat groupAdmin users'
+  );
+  if (!chat) {
+    throw new ExpressError(StatusCodes.NOT_FOUND, 'Chat not found');
+  }
+
+  // remove user only in a group
+  if (!chat.isGroupChat) {
+    throw new ExpressError(
+      StatusCodes.BAD_REQUEST,
+      'You can remove users only in group chats'
+    );
+  }
+
+  const adminId = chat.groupAdmin.toString();
+  const loggedInId = req.user.id;
+
+  // admin removing anyone OR user removing themselves
+  const isAdmin = loggedInId === adminId;
+  const isSelf = loggedInId === userId;
+
+  if (!isAdmin && !isSelf) {
+    throw new ExpressError(
+      StatusCodes.FORBIDDEN,
+      'Only admin can remove users, except you can remove yourself'
+    );
+  }
+
+  // prevent admin from removing themselves (unless group is dissolved — which we don't support)
+  if (userId === adminId) {
+    throw new ExpressError(
+      StatusCodes.BAD_REQUEST,
+      'Group admin cannot remove themselves'
+    );
+  }
+
+  // ensure user is in group
+  if (!chat.users.map((u) => u.toString()).includes(userId)) {
+    throw new ExpressError(
+      StatusCodes.BAD_REQUEST,
+      'User is not a member of this group'
+    );
+  }
+
+  // remove user
+  const updatedChat = await Chat.findByIdAndUpdate(
+    chatId,
+    { $pull: { users: userId } },
+    { new: true }
+  )
+    .populate('users', '-password')
+    .populate('groupAdmin', '-password');
+
+  return res.status(StatusCodes.OK).json(updatedChat);
+};
+
 export {
   getOrCreateOneToOneChat,
   getUserChats,
   createNewGroupChat,
   updateGroupChatName,
+  addUserToGroupChat,
+  removeUserFromGroupChat,
 };

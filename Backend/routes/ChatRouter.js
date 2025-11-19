@@ -5,6 +5,8 @@ import {
   oneToOneChatSchema,
   createGroupChatSchema,
   updateGroupChatSchema,
+  addUserToGroupSchema,
+  removeUserFromGroupSchema,
 } from '../utils/Schema.js';
 import { validateSchema } from '../utils/ValidateSchema.js';
 import {
@@ -12,6 +14,8 @@ import {
   getUserChats,
   createNewGroupChat,
   updateGroupChatName,
+  addUserToGroupChat,
+  removeUserFromGroupChat,
 } from '../controllers/ChatController.js';
 const chatRouter = express.Router();
 
@@ -40,6 +44,22 @@ chatRouter.put(
   verifyToken,
   validateSchema(updateGroupChatSchema),
   wrapAsync(updateGroupChatName)
+);
+
+// add a user to the group
+chatRouter.put(
+  '/group/add-user',
+  verifyToken,
+  validateSchema(addUserToGroupSchema),
+  wrapAsync(addUserToGroupChat)
+);
+
+// remove a user from the group
+chatRouter.put(
+  '/group/remove-user',
+  verifyToken,
+  validateSchema(removeUserFromGroupSchema),
+  wrapAsync(removeUserFromGroupChat)
 );
 
 export { chatRouter };
