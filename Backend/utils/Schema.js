@@ -106,6 +106,15 @@ const removeUserFromGroupSchema = Joi.object({
   }).required(),
 });
 
+// allMessages schema (get messages by chatId)
+const getChatMessagesSchema = Joi.object({
+  params: Joi.object({
+    chatId: idField.messages({
+      'any.required': 'chatId is required',
+    }),
+  }).required(),
+});
+
 export {
   signupSchema,
   loginSchema,
@@ -116,4 +125,5 @@ export {
   updateGroupChatSchema,
   addUserToGroupSchema,
   removeUserFromGroupSchema,
+  getChatMessagesSchema,
 };
