@@ -115,6 +115,19 @@ const getChatMessagesSchema = Joi.object({
   }).required(),
 });
 
+// sendMessage schema (send a new message)
+const createMessageSchema = Joi.object({
+  body: Joi.object({
+    content: Joi.string().trim().required().messages({
+      'string.empty': 'Message content cannot be empty',
+      'any.required': 'Message content is required',
+    }),
+    chatId: idField.messages({
+      'any.required': 'chatId is required',
+    }),
+  }).required(),
+});
+
 export {
   signupSchema,
   loginSchema,
@@ -126,4 +139,5 @@ export {
   addUserToGroupSchema,
   removeUserFromGroupSchema,
   getChatMessagesSchema,
+  createMessageSchema,
 };

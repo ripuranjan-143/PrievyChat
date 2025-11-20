@@ -22,4 +22,12 @@ messageRouter.get(
   wrapAsync(getChatMessages)
 );
 
+// create a message
+messageRouter.post(
+  '/',
+  verifyToken,
+  validateSchema(createMessageSchema),
+  wrapAsync(createMessage)
+);
+
 export { messageRouter };
