@@ -2,7 +2,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { memo } from 'react';
 
-export const GlobalToaster = memo(() => (
+const GlobalToaster = memo(() => (
   <ToastContainer
     position="bottom-left"
     autoClose={3000}
@@ -15,3 +15,5 @@ export const GlobalToaster = memo(() => (
     theme="dark"
   />
 ));
+
+export default GlobalToaster;

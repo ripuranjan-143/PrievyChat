@@ -4,6 +4,7 @@ import axios from 'axios';
 import './Auth.css';
 import showToast from '../../utils/ToastHelper.js';
 import server from '../../config/api.js';
+import { useAuth } from '../../contexts/AuthContext.jsx';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -11,11 +12,13 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const { authenticateUser } = useAuth();
+
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    // Basic validation
+    // basic validation
     if (!email.trim() || !password.trim()) {
       showToast('All fields are required!', 'warn');
       return;
@@ -38,7 +41,7 @@ const Login = () => {
         config
       );
       showToast('Login successful!', 'success');
-      localStorage.setItem('token', data.token);
+      authenticateUser(data.token);
       navigate('/chats');
       setEmail('');
       setPassword('');
@@ -117,8 +120,8 @@ const Login = () => {
           type="button"
           className="btn border text-white login-account bg-danger mb-4 d-flex justify-content-center align-items-center"
           onClick={() => {
-            setEmail('ripuranjan143@gmail.com');
-            setPassword('rrrr');
+            setEmail('ripu@gmail.com');
+            setPassword('rrrrrr');
           }}
         >
           Get Guest User Credentials

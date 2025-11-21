@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import server from '../../config/api.js';
 import showToast from '../../utils/ToastHelper';
+import { useAuth } from '../../contexts/AuthContext';
 
 import './ProfileSetup.css';
 function ProfileSetup() {
@@ -12,6 +13,8 @@ function ProfileSetup() {
   const [username, setUsername] = useState('');
   const [picture, setPicture] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const { authenticateUser } = useAuth();
 
   const navigate = useNavigate();
 
@@ -73,7 +76,7 @@ function ProfileSetup() {
       );
       showToast('Account created successfully!', 'success');
       localStorage.removeItem('tempSignupData');
-      localStorage.setItem('token', data.token);
+      authenticateUser(data.token);
 
       // Clear state
       setEmail('');
