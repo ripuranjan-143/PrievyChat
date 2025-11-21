@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { showToast } from '../../utils/ToastHelper';
+import showToast from '../../utils/ToastHelper';
 
 const Signup = () => {
   const [email, setEmail] = useState('');

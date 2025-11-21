@@ -2,7 +2,7 @@ import { toast } from 'react-toastify';
 
 let activeToastId = null;
 
-export const showToast = (message, type = 'info') => {
+const showToast = (message, type = 'info') => {
   if (activeToastId) {
     toast.dismiss(activeToastId);
     activeToastId = null;
@@ -24,3 +24,5 @@ export const showToast = (message, type = 'info') => {
       break;
   }
 };
+
+export default showToast;

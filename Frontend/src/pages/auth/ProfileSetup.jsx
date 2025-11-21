@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 import server from '../../config/api.js';
-import { showToast } from '../../utils/ToastHelper';
+import showToast from '../../utils/ToastHelper';
 
 import './ProfileSetup.css';
 function ProfileSetup() {

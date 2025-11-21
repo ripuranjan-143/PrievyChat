@@ -71,3 +71,38 @@ select:-webkit-autofill:focus {
   box-shadow: none !important;
   outline: none !important;
 }
+
+
+
+/* login */
+.login-account {
+  width: 29rem !important;
+}
+
+.login-account:hover {
+  color: rgb(12, 10, 10) !important;
+}
+
+.password:hover {
+  background-color: #5a5656 !important;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px #fdfbfb inset !important;
+  -webkit-text-fill-color: rgb(7, 7, 7) !important;
+  caret-color: white !important;
+  border: 1px solid #333 !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+::placeholder {
+  color: #0b0a0a !important;
+}
