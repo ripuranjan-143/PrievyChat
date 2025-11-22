@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
       const res = await axios.get(`${server}/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setCurrentUser(res.data);
+      setCurrentUser({ ...res.data, token });
     } catch (err) {
       console.error('Error fetching user data:', err);
       showToast('Session expired. Please login again.', 'error');
@@ -51,12 +51,19 @@ export const AuthProvider = ({ children }) => {
     await fetchUser(token);
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setCurrentUser(null);
+    navigate('/');
+  };
+
   // memoize context value to prevent unnecessary re-renders
   const value = useMemo(
     () => ({
       currentUser,
       userLoading,
       authenticateUser,
+      handleLogout,
     }),
     [currentUser, userLoading]
   );

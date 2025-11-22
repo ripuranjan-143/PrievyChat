@@ -14,3 +14,20 @@ body {
   background: linear-gradient(135deg, #4fa8ff 0%, #b0dfff 100%);
   min-height: 100vh;
 }
+
+/* navbar */
+.search-list:hover {
+cursor: pointer;
+background-color: #d4ebea;
+}
+
+.hover-colour:hover {
+  background-color: rgb(160, 209, 217) !important;
+}
+
+.btn-hover-colour:hover {
+  color: black !important;
+}
+.search-hover-colour:hover {
+  background-color: rgb(215, 234, 237) !important;
+}
