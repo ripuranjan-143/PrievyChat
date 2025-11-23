@@ -31,3 +31,8 @@ background-color: #d4ebea;
 .search-hover-colour:hover {
   background-color: rgb(215, 234, 237) !important;
 }
+
+/* mychats */
+::-webkit-scrollbar {
+  display: none;
+}

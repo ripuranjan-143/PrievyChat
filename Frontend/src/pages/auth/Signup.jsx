@@ -19,20 +19,22 @@ const Signup = () => {
     const validations = [
       {
         condition:
-          !email.trim() || !password.trim() || !confirmPassword,
-        message: 'Please fill all required fields',
+          !email.trim() ||
+          !password.trim() ||
+          !confirmPassword.trim(),
+        message: 'Please fill all required fields!',
       },
       {
         condition: !email.includes('@'),
-        message: 'Please enter a valid email address',
+        message: 'Please enter a valid email address!',
       },
       {
         condition: password !== confirmPassword,
-        message: 'Passwords do not match',
+        message: 'Passwords do not match!',
       },
       {
         condition: password.length < 6,
-        message: 'Password must be at least 6 characters',
+        message: 'Password must be at least 6 characters!',
       },
     ];
 

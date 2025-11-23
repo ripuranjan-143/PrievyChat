@@ -24,7 +24,7 @@ const Login = () => {
       return;
     }
     if (!email.includes('@')) {
-      showToast('Please enter a valid email address', 'warn');
+      showToast('Please enter a valid email address!', 'warn');
       return;
     }
 
@@ -37,7 +37,7 @@ const Login = () => {
       };
       const { data } = await axios.post(
         `${server}/users/login`,
-        { email: email.trim(), password },
+        { email: email.trim(), password: password.trim() },
         config
       );
       showToast('Login successful!', 'success');
@@ -46,10 +46,11 @@ const Login = () => {
       setEmail('');
       setPassword('');
     } catch (error) {
-      console.error(error);
-      const errMsg = error?.message || 'Signup failed!';
+      const errMsg =
+        error.response?.data?.message ||
+        error.message ||
+        'Login failed!';
       showToast(errMsg, 'error');
-      return;
     } finally {
       setLoading(false);
     }

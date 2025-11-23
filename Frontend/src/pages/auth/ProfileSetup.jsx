@@ -3,8 +3,8 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 import server from '../../config/api.js';
-import showToast from '../../utils/ToastHelper';
-import { useAuth } from '../../contexts/AuthContext';
+import showToast from '../../utils/ToastHelper.js';
+import { useAuth } from '../../contexts/AuthContext.jsx';
 
 import './ProfileSetup.css';
 function ProfileSetup() {
@@ -29,38 +29,36 @@ function ProfileSetup() {
   }, []);
 
   // upload image
-  const handleImageChange = (pics) => {
-    if (!pics || !['image/jpeg', 'image/png'].includes(pics.type)) {
-      showToast('Only JPG and PNG allowed', 'error');
+  const handleImageChange = async (file) => {
+    if (!file) return;
+    if (!['image/jpeg', 'image/png'].includes(file.type)) {
+      showToast('Only JPG and PNG allowed!', 'error');
       return;
     }
     setLoading(true);
-    const data = new FormData();
-    data.append('file', pics);
-    data.append('upload_preset', 'ChatApk');
-    data.append('cloud_name', 'dwv10qvzj');
-    fetch('https://api.cloudinary.com/v1_1/dwv10qvzj/image/upload', {
-      method: 'POST',
-      body: data,
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data && data.secure_url) {
-          setPicture(data.secure_url);
-        }
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        showToast('Image upload failed', 'error');
-        setLoading(false);
-      });
+    try {
+      const data = new FormData();
+      data.append('file', file);
+      data.append('upload_preset', 'ChatApk');
+      data.append('cloud_name', 'dwv10qvzj');
+      const res = await axios.post(
+        'https://api.cloudinary.com/v1_1/dwv10qvzj/image/upload',
+        data
+      );
+      if (res.data.secure_url) setPicture(res.data.secure_url);
+      else showToast('Image upload failed!', 'error');
+    } catch (err) {
+      console.error(err);
+      showToast('Image upload failed!', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // save the user details / signup
   const handleSave = async () => {
     if (!username.trim()) {
-      showToast('Please enter a valid name', 'error');
+      showToast('Please enter a valid name!', 'error');
       return;
     }
     setLoading(true);
@@ -86,8 +84,12 @@ function ProfileSetup() {
 
       navigate('/chats');
     } catch (err) {
-      console.error(err);
-      showToast(err?.message || 'Signup failed!', 'error');
+      console.log(err);
+      const errMsg =
+        err.response?.data?.message ||
+        err.message ||
+        'Signup failed!';
+      showToast(errMsg, 'error');
     } finally {
       setLoading(false);
     }

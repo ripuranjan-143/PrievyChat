@@ -15,7 +15,10 @@ const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
+  // current logged-in userInfo
   const [currentUser, setCurrentUser] = useState(null);
+
+  // displays loading screen while checking login state
   const [userLoading, setUserLoading] = useState(true);
   const navigate = useNavigate();
 
