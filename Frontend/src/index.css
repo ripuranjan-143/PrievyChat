@@ -17,8 +17,8 @@ body {
 
 /* navbar */
 .search-list:hover {
-cursor: pointer;
-background-color: #d4ebea;
+  cursor: pointer;
+  background-color: #d4ebea;
 }
 
 .hover-colour:hover {
@@ -35,4 +35,43 @@ background-color: #d4ebea;
 /* mychats */
 ::-webkit-scrollbar {
   display: none;
+}
+
+/* GroupChatSettingsModal */
+.btn-close:focus,
+.btn-close:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* UserSearchDrawer */
+.search-panel {
+  position: fixed;
+  top: 0;
+  left: -474px; /* hide offscreen initially */
+  width: 474px;
+  height: 100%;
+  background-color: #f8f8f8;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
+  transition: left 0.3s ease-in-out;
+  z-index: 1050;
+  overflow-y: auto;
+}
+
+.search-panel.open {
+  left: 0; /* slide in */
+}
+
+.search-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* semi-transparent black */
+  z-index: 1040;
+}
+
+.spinner-overlay {
+  z-index: 1060 !important;
 }
