@@ -2,19 +2,34 @@ import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import ProfileModal from '../components/ProfileModal.jsx';
 import UserSearchDrawer from './UserSearchDrawer.jsx';
+import AvatarRow from '../components/AvatarRow.jsx';
 
 function Navbar() {
   const [showProfile, setShowProfile] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const { currentUser, handleLogout } = useAuth();
 
   return (
     <>
+      {/* invisible overlay (closes menu) */}
+      {showUserMenu && (
+        <div
+          onClick={() => setShowUserMenu(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            zIndex: 998,
+          }}
+        />
+      )}
       <div className="d-flex justify-content-between px-4 py-2 bg-white">
         {/* left section */}
         <div
-          type="button"
           onClick={() => setShowSearch(true)}
           className="d-flex align-items-center border border-dark rounded px-2 py-1 search-hover-colour"
           style={{
@@ -28,92 +43,83 @@ function Navbar() {
           <span>Search or start a new chat</span>
         </div>
 
-        {/* header */}
+        {/* Header */}
         <div className="pt-1">
           <h3>EchoMeet</h3>
         </div>
 
         {/* right section */}
         <div className="d-flex align-items-center">
+          {/* theme toggle */}
           <div
             className="me-3 p-1 hover-colour"
-            style={{
-              borderRadius: '10px',
-              cursor: 'pointer',
-            }}
+            style={{ borderRadius: '10px', cursor: 'pointer' }}
           >
-            {/* theme change */}
-            <i className="fa-regular fa-sun "></i>
-            {/* <i className="fa-solid fa-moon"></i> */}
+            <i className="fa-regular fa-sun"></i>
           </div>
+
+          {/* bell icon */}
           <div
-            className="dropdown me-3 hover-colour"
-            style={{
-              borderRadius: '10px',
-            }}
+            className="me-3 hover-colour"
+            style={{ borderRadius: '10px' }}
           >
-            <button
-              className="btn position-relative p-0 p-1"
-              type="button"
-            >
-              {/* Bell Icon */}
+            <button className="btn p-1">
               <i className="fa-solid fa-bell fs-6"></i>
             </button>
           </div>
 
-          {/* profile dropdown*/}
-          <div className="dropdown">
-            <button
-              className="btn border-0 dropdown-toggle d-flex align-items-center hover-colour"
-              type="button"
-              data-bs-toggle="dropdown"
-              aria-expanded="false"
-            >
-              <img
-                src={
-                  currentUser?.picture ||
-                  'https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg'
-                }
-                alt="User Avatar"
-                className="rounded-circle me-2"
-                style={{
-                  width: '40px',
-                  height: '37px',
-                  objectFit: 'cover',
-                }}
+          {/* custom user dropdown */}
+          <div className="position-relative">
+            <div onClick={() => setShowUserMenu(!showUserMenu)}>
+              <AvatarRow
+                img={currentUser?.picture}
+                name={currentUser?.name || 'Guest'}
+                className="px-2 py-1"
               />
-              <span className="fw-semibold text-dark">
-                {currentUser?.name || 'Guest'}
-              </span>
-            </button>
+            </div>
 
-            <ul className="dropdown-menu dropdown-menu-end shadow-sm ">
-              <li>
+            {/* dropdown menu */}
+            {showUserMenu && (
+              <div
+                className="shadow-lg p-2 bg-white mt-2"
+                style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: '45px',
+                  borderRadius: '8px',
+                  minWidth: '160px',
+                  zIndex: 999,
+                }}
+              >
                 <button
-                  className="dropdown-item hover-colour btn-hover-colour"
-                  onClick={() => setShowProfile(true)}
+                  className="dropdown-item hover-colour btn-hover-colour px-2 py-1 rounded"
+                  onClick={() => {
+                    setShowProfile(true);
+                    setShowUserMenu(false);
+                  }}
                 >
                   <i className="fa-solid fa-user me-2"></i> My Profile
                 </button>
-              </li>
-              <li>
+
                 <button
-                  className="dropdown-item hover-colour btn-hover-colour"
+                  className="dropdown-item hover-colour btn-hover-colour px-2 py-1 rounded"
                   onClick={handleLogout}
                 >
-                  <i className="fa-solid fa-right-from-bracket me-2"></i>{' '}
+                  <i className="fa-solid fa-right-from-bracket me-2"></i>
                   Logout
                 </button>
-              </li>
-            </ul>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
+      {/* profile modal */}
       {showProfile && (
         <ProfileModal show={showProfile} setShow={setShowProfile} />
       )}
 
+      {/* search drawer */}
       {showSearch && (
         <UserSearchDrawer
           showSearch={showSearch}

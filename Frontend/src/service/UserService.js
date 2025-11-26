@@ -1,48 +1,30 @@
 import axios from 'axios';
-import showToast from '../utils/ToastHelper';
 import server from '../config/api';
+import formatApiError from '../utils/FormatApiError.js';
 
 const searchUsers = async (query, token) => {
-  if (!query.trim()) {
-    showToast('Please enter something to search', 'warning');
-    return [];
-  }
+  if (!query.trim()) return [];
   try {
-    const config = {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    };
     const { data } = await axios.get(
       `${server}/users?search=${query}`,
-      config
+      { headers: { Authorization: `Bearer ${token}` } }
     );
     return data;
   } catch (error) {
-    console.log(error);
-    showToast(error.message, 'error');
-    return [];
+    throw formatApiError(error);
   }
 };
 
 const accessChatWithUser = async (userId, token) => {
   try {
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-    };
     const { data } = await axios.post(
       `${server}/chats/one-to-one`,
       { userId },
-      config
+      { headers: { Authorization: `Bearer ${token}` } }
     );
     return data;
   } catch (error) {
-    console.log(error);
-    showToast(error.message, 'error');
-    return null;
+    throw formatApiError(error);
   }
 };
 

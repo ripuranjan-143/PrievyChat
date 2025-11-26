@@ -6,6 +6,7 @@ import {
   searchUsers,
   accessChatWithUser,
 } from '../service/UserService.js';
+import showToast from '../utils/ToastHelper.js';
 
 const UserSearchDrawer = ({ showSearch, setShowSearch }) => {
   const [search, setSearch] = useState('');
@@ -28,9 +29,14 @@ const UserSearchDrawer = ({ showSearch, setShowSearch }) => {
   const handleSearch = async (query) => {
     setSearch(query);
     setLoading(true);
-    const users = await searchUsers(query, currentUser.token);
-    setSearchResult(users);
-    setLoading(false);
+    try {
+      const users = await searchUsers(query, currentUser.token);
+      setSearchResult(users);
+    } catch (error) {
+      showToast(error, 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const debounceSearch = useCallback(
@@ -49,13 +55,21 @@ const UserSearchDrawer = ({ showSearch, setShowSearch }) => {
   // access chat when user clicks a search result
   const accessChat = async (userId) => {
     setLoadingChat(true);
-    const chat = await accessChatWithUser(userId, currentUser.token);
-    if (chat && !chats.find((c) => c._id === chat._id)) {
-      setChats([chat, ...chats]);
+    try {
+      const chat = await accessChatWithUser(
+        userId,
+        currentUser.token
+      );
+      if (chat && !chats.find((c) => c._id === chat._id)) {
+        setChats([chat, ...chats]);
+      }
+      if (chat) setSelectedChat(chat);
+    } catch (error) {
+      showToast(error, 'error');
+    } finally {
+      setLoadingChat(false);
+      setShowSearch(false);
     }
-    if (chat) setSelectedChat(chat);
-    setShowSearch(false);
-    setLoadingChat(false);
   };
 
   return (
@@ -118,10 +132,10 @@ const UserSearchDrawer = ({ showSearch, setShowSearch }) => {
         {/* Search results */}
         <div className="list-group px-2">
           {loading ? (
-            <div class="d-flex align-items-center text-secondary px-2">
+            <div className="d-flex align-items-center text-secondary px-2">
               <strong role="status">Loading...</strong>
               <div
-                class="spinner-border ms-auto"
+                className="spinner-border ms-auto"
                 aria-hidden="true"
               ></div>
             </div>
