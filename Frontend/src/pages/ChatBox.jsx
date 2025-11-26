@@ -1,12 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useChat } from '../contexts/ChatStateProvider';
 import { useAuth } from '../contexts/AuthContext';
 import { getSenderData } from '../utils/ChatLogics.js';
 import { FadeLoader } from 'react-spinners';
 import AvatarRow from '../components/AvatarRow.jsx';
+import { fetchChatMessages } from '../service/MessageService.js';
+import GroupChatSettingsModal from './GroupChatSettingsModal.jsx';
 
 function ChatBox({ fetchAgain, setFetchAgain }) {
   const [loading, setLoading] = useState(false);
+  const [groupchat, setGroupChat] = useState(false);
+  const [message, setMessages] = useState([]);
 
   const { selectedChat } = useChat();
   const { currentUser } = useAuth();
@@ -15,6 +19,27 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
     selectedChat && !selectedChat.isGroupChat
       ? getSenderData(currentUser, selectedChat.users)
       : { name: '', user: null };
+
+  const fetchMessages = async () => {
+    if (!selectedChat) return;
+    try {
+      setLoading(true);
+      const data = await fetchChatMessages(
+        selectedChat._id,
+        currentUser.token
+      );
+      setMessages(data);
+    } catch (error) {
+      console.log(error);
+      showToast(error, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMessages();
+  }, [selectedChat]);
 
   return (
     <div
@@ -41,13 +66,24 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
                 className="ms-3"
               />
             ) : (
-              <div>
-                <AvatarRow
-                  img={selectedChat?.picture}
-                  name={selectedChat.chatName.toUpperCase()}
-                  className="ms-3"
-                />
-              </div>
+              <>
+                <div onClick={() => setGroupChat(true)}>
+                  <AvatarRow
+                    img={selectedChat?.picture}
+                    name={selectedChat.chatName.toUpperCase()}
+                    className="ms-3"
+                  />
+                </div>
+                {groupchat && (
+                  <GroupChatSettingsModal
+                    groupChat={groupchat}
+                    setGroupChat={setGroupChat}
+                    fetchAgain={fetchAgain}
+                    setFetchAgain={setFetchAgain}
+                    fetchMessages={fetchMessages}
+                  />
+                )}
+              </>
             )}
           </div>
           {/* body */}
