@@ -74,7 +74,6 @@ function Navbar() {
               <AvatarRow
                 img={currentUser?.picture}
                 name={currentUser?.name || 'Guest'}
-                className="px-2 py-1"
               />
             </div>
 

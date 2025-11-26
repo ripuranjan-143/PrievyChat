@@ -6,7 +6,7 @@ function AvatarRow({
 }) {
   return (
     <div
-      className={`d-flex align-items-center hover-colour rounded ${className}`}
+      className={`d-flex align-items-center hover-colour rounded px-2 py-1 ${className} `}
       style={{ cursor: 'pointer' }}
     >
       <img

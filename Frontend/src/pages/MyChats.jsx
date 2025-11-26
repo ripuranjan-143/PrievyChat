@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useChat } from '../contexts/ChatStateProvider.jsx';
 import showToast from '../utils/ToastHelper.js';
-import server from '../config/api.js';
-import { getSender } from '../utils/ChatLogics.js';
+import { getSenderData } from '../utils/ChatLogics.js';
 import GroupChatModal from './GroupChatModal.jsx';
+import { fetchChatsService } from '../service/ChatService.js';
 
 const MyChats = ({ fetchAgain }) => {
   const [showGroupchat, setShowGroupchat] = useState(false);
@@ -16,20 +15,10 @@ const MyChats = ({ fetchAgain }) => {
 
   const fetchChats = async () => {
     try {
-      const config = {
-        headers: {
-          Authorization: `Bearer ${currentUser.token}`,
-        },
-      };
-      const { data } = await axios.get(`${server}/chats`, config);
+      const data = await fetchChatsService(currentUser.token);
       setChats(data);
     } catch (error) {
-      console.log(error);
-      const errMsg =
-        error.response?.data?.message ||
-        error.message ||
-        'Failed to fetch chats!';
-      showToast(errMsg, 'error');
+      showToast(error, 'error');
     }
   };
 
@@ -41,14 +30,14 @@ const MyChats = ({ fetchAgain }) => {
     <div style={{ width: '31vw' }} className=" p-2 border bg-white">
       <div
         className="px-2 d-flex justify-content-between"
-        style={{ fontFamily: 'Work Sans',background: '#F8F8F8' }}
+        style={{ fontFamily: 'Work Sans', background: '#F8F8F8' }}
       >
-        <p className='fs-2 '>My Chats</p>
+        <p className="fs-2 ">My Chats</p>
         <button
           className="btn text-white mt-1 btn-hover-colour"
           style={{
             backgroundColor: '#38B2AC',
-            height:'45px'
+            height: '45px',
           }}
           onClick={() => setShowGroupchat(true)}
         >
@@ -63,7 +52,18 @@ const MyChats = ({ fetchAgain }) => {
           height: '79.7vh',
         }}
       >
-        {chats?.length > 0 ? (
+        {chats === null || chats === undefined ? (
+          // State before data arrives
+          <div className="d-flex ps-2 fs-4 justify-content-center align-items-center h-100 w-100">
+            <p>Loading...</p>
+          </div>
+        ) : chats.length === 0 ? (
+          // When array exists but is empty
+          <div className="d-flex ps-2 fs-5 justify-content-center align-items-center h-100 w-100">
+            <p>Search a user to start the chat</p>
+          </div>
+        ) : (
+          // When chats exist
           <div
             style={{
               maxHeight: '100%',
@@ -72,8 +72,13 @@ const MyChats = ({ fetchAgain }) => {
             }}
             className="d-flex flex-column overflow-y-scroll"
           >
-            {chats?.map((chat) => {
+            {chats.map((chat) => {
               if (!chat || !chat.users) return null;
+
+              // get sender data for private chat
+              const { name: otherName } = !chat.isGroupChat
+                ? getSenderData(currentUser, chat.users)
+                : { name: chat.chatName, user: null };
 
               return (
                 <div
@@ -87,18 +92,10 @@ const MyChats = ({ fetchAgain }) => {
                     color: selectedChat === chat ? 'white' : 'black',
                   }}
                 >
-                  <p>
-                    {!chat.isGroupChat
-                      ? getSender(currentUser, chat.users)
-                      : chat.chatName}
-                  </p>
+                  <p>{otherName}</p>
                 </div>
               );
             })}
-          </div>
-        ) : (
-          <div className="d-flex ps-2 fs-4 justify-content-center align-items-center h-100 w-100">
-            <p>Loading...</p>
           </div>
         )}
       </div>
