@@ -50,6 +50,7 @@ function GroupChatSettingsModal({
       setGroupChatName('');
     }
   };
+
   const handleRemove = async (removeUser) => {
     if (
       selectedChat.groupAdmin._id !== currentUser._id &&
@@ -58,7 +59,7 @@ function GroupChatSettingsModal({
       showToast('Only admins can remove users!', 'error');
       return;
     }
-
+    
     try {
       setLoading(true);
       const data = await removeUserFromGroup(
@@ -81,6 +82,7 @@ function GroupChatSettingsModal({
       setLoading(false);
     }
   };
+
   const handleAddUser = async (addUser) => {
     if (selectedChat.users.find((u) => u._id === addUser._id)) {
       showToast('User already in group!', 'warn');
@@ -107,6 +109,7 @@ function GroupChatSettingsModal({
       setGroupChatName('');
     }
   };
+
   const handleSearch = async (query) => {
     if (!query.trim()) {
       setSearchResult([]);
@@ -124,6 +127,7 @@ function GroupChatSettingsModal({
       setLoading(false);
     }
   };
+
   return (
     <>
       {groupChat && (

@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+
 import './Auth.css';
 import showToast from '../../utils/ToastHelper.js';
-import server from '../../config/api.js';
 import { useAuth } from '../../contexts/AuthContext.jsx';
+import { loginUser } from '../../service/AuthService.js';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -30,27 +30,14 @@ const Login = () => {
 
     setLoading(true);
     try {
-      const config = {
-        headers: {
-          'Content-type': 'application/json',
-        },
-      };
-      const { data } = await axios.post(
-        `${server}/users/login`,
-        { email: email.trim(), password: password.trim() },
-        config
-      );
+      const data = await loginUser(email, password);
       showToast('Login successful!', 'success');
       authenticateUser(data.token);
       navigate('/chats');
       setEmail('');
       setPassword('');
     } catch (error) {
-      const errMsg =
-        error.response?.data?.message ||
-        error.message ||
-        'Login failed!';
-      showToast(errMsg, 'error');
+      showToast(error, 'error');
     } finally {
       setLoading(false);
     }
