@@ -11,7 +11,7 @@ function ChatPage() {
 
   return (
     <div className="w-100">
-      {currentUser && <Navbar />}
+      {currentUser && <Navbar setFetchAgain={setFetchAgain} />}
       <div style={{ height: '90.6vh', display: 'flex' }}>
         {currentUser && <MyChats fetchAgain={fetchAgain} />}
         {currentUser && (

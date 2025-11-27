@@ -108,6 +108,11 @@ function GroupChatSettingsModal({
     }
   };
   const handleSearch = async (query) => {
+    if (!query.trim()) {
+      setSearchResult([]);
+      showToast('Please enter something to search', 'error');
+      return;
+    }
     setSearch(query);
     setLoading(true);
     try {

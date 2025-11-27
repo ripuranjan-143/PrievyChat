@@ -88,7 +88,9 @@ const MyChats = ({ fetchAgain }) => {
                   style={{
                     cursor: 'pointer',
                     background:
-                      selectedChat === chat ? '#38B2AC' : '#E8E8E8',
+                      selectedChat?._id === chat._id
+                        ? '#38B2AC'
+                        : '#E8E8E8',
                     color: selectedChat === chat ? 'white' : 'black',
                   }}
                 >

@@ -41,4 +41,22 @@ const addUserToGroup = async (chatId, userId, token) => {
   }
 };
 
-export { renameGroup, removeUserFromGroup, addUserToGroup };
+const createGroupChat = async (name, users, token) => {
+  try {
+    const { data } = await axios.post(
+      `${server}/chats/group`,
+      { name, users },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return data;
+  } catch (error) {
+    throw formatApiError(error);
+  }
+};
+
+export {
+  renameGroup,
+  removeUserFromGroup,
+  addUserToGroup,
+  createGroupChat,
+};

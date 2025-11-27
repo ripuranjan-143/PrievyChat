@@ -4,7 +4,7 @@ import ProfileModal from '../components/ProfileModal.jsx';
 import UserSearchDrawer from './UserSearchDrawer.jsx';
 import AvatarRow from '../components/AvatarRow.jsx';
 
-function Navbar() {
+function Navbar({ setFetchAgain }) {
   const [showProfile, setShowProfile] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -123,6 +123,7 @@ function Navbar() {
         <UserSearchDrawer
           showSearch={showSearch}
           setShowSearch={setShowSearch}
+          setFetchAgain={setFetchAgain}
         />
       )}
     </>

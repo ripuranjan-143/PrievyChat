@@ -27,6 +27,11 @@ const UserSearchDrawer = ({ showSearch, setShowSearch }) => {
 
   // search user
   const handleSearch = async (query) => {
+    if (!query.trim()) {
+      setSearchResult([]);
+      showToast('Please enter something to search', 'error');
+      return;
+    }
     setSearch(query);
     setLoading(true);
     try {
@@ -63,7 +68,10 @@ const UserSearchDrawer = ({ showSearch, setShowSearch }) => {
       if (chat && !chats.find((c) => c._id === chat._id)) {
         setChats([chat, ...chats]);
       }
-      if (chat) setSelectedChat(chat);
+      if (chat) {
+        setSelectedChat(chat);
+        setFetchAgain((prev) => !prev); // force MyChats to refresh
+      }
     } catch (error) {
       showToast(error, 'error');
     } finally {

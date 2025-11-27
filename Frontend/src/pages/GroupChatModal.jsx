@@ -4,6 +4,8 @@ import server from '../config/api.js';
 import { useChat } from '../contexts/ChatStateProvider.jsx';
 import showToast from '../utils/ToastHelper.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import { searchUsers } from '../service/UserService.js';
+import { createGroupChat } from '../service/GroupChatService.js';
 
 function GroupChatModal({ showGroup, setShowGroup }) {
   // don't render if modal hidden
@@ -16,36 +18,22 @@ function GroupChatModal({ showGroup, setShowGroup }) {
   const [loading, setLoading] = useState(false);
 
   const { currentUser } = useAuth();
-  const { chats, setChats } = useChat();
+  const { chats, setChats, setSelectedChat } = useChat();
 
   // search users from backend
   const handleSearch = async (query) => {
+    if (!query.trim()) {
+      setSearchResult([]);
+      showToast('Please enter something to search', 'error');
+      return;
+    }
     setSearch(query);
-    if (!query.trim()) return setSearchResult([]);
     try {
       setLoading(true);
-      const config = {
-        headers: {
-          Authorization: `Bearer ${currentUser.token}`,
-        },
-      };
-      const { data } = await axios.get(
-        `${server}/users?search=${query}`,
-        config
-      );
-      setSearchResult(data);
-      {
-        !loading && searchResult.length === 0 && search && (
-          <p className="text-center mt-2">no users found</p>
-        );
-      }
+      const users = await searchUsers(query, currentUser.token);
+      setSearchResult(users);
     } catch (error) {
-      console.log(error);
-      const errMsg =
-        error.response?.data?.message ||
-        error.message ||
-        'Search failed!';
-      showToast(errMsg, 'error');
+      showToast(error, 'error');
     } finally {
       setLoading(false);
     }
@@ -68,27 +56,22 @@ function GroupChatModal({ showGroup, setShowGroup }) {
     setSearch('');
   };
 
-  // submit new group chat
+  // create new group chat
   const handleSubmit = async () => {
     if (!groupChatName.trim() || selectedUsers.length === 0) {
       showToast('All fields are required!', 'warn');
       return;
     }
     try {
-      const config = {
-        headers: {
-          Authorization: `Bearer ${currentUser.token}`,
-        },
-      };
-      const { data } = await axios.post(
-        `${server}/chats/group`,
-        {
-          name: groupChatName.trim(),
-          users: selectedUsers.map((u) => u._id),
-        },
-        config
+      const newChat = await createGroupChat(
+        groupChatName.trim(),
+        selectedUsers.map((u) => u._id),
+        currentUser.token
       );
-      setChats([data, ...chats]);
+      // reset and close modal
+      setChats([newChat, ...chats]);
+      // redirect to this new chat
+      setSelectedChat(newChat);
       setShowGroup(false);
       showToast('New Group Chat Created!', 'success');
       setGroupChatName('');
@@ -96,12 +79,7 @@ function GroupChatModal({ showGroup, setShowGroup }) {
       setSearch('');
       setSearchResult([]);
     } catch (error) {
-      console.log(error);
-      const errMsg =
-        error.response?.data?.message ||
-        error.message ||
-        'Group creation failed!';
-      showToast(errMsg, 'error');
+      showToast(error, 'error');
     }
   };
 
