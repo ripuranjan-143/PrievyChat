@@ -1,7 +1,10 @@
 import { useAuth } from '../contexts/AuthContext';
 
-const ProfileModel = ({ show, setShow }) => {
+const ProfileModal = ({ show, setShow, user }) => {
   const { currentUser } = useAuth();
+
+  // Use passed user OR fallback to current logged user
+  const displayUser = user || currentUser;
 
   if (!show) return null;
 
@@ -16,7 +19,7 @@ const ProfileModel = ({ show, setShow }) => {
           <div className="modal-content border-0 shadow-lg">
             <div className="modal-header">
               <h5 className="modal-title text-center">
-                {currentUser?.name}
+                {displayUser?.name}
               </h5>
               <button
                 type="button"
@@ -26,10 +29,9 @@ const ProfileModel = ({ show, setShow }) => {
             </div>
 
             <div className="modal-body text-center">
-              {/* Avatar */}
               <div className="position-relative mx-auto mb-3">
                 <img
-                  src={currentUser?.picture}
+                  src={displayUser?.picture}
                   alt="avatar"
                   className="rounded-circle shadow mt-4"
                   style={{
@@ -41,14 +43,14 @@ const ProfileModel = ({ show, setShow }) => {
                 />
               </div>
 
-              <h4 className="fw-bold mb-1">{currentUser?.name}</h4>
-              <p className="text-muted">{currentUser?.email}</p>
+              <h4 className="fw-bold mb-1">{displayUser?.name}</h4>
+              <p className="text-muted">{displayUser?.email}</p>
             </div>
 
             <div className="modal-footer border-0">
               <button
                 style={{ backgroundColor: '#38B2AC' }}
-                className="btn px-4 text-white btn-hover-colour" 
+                className="btn px-4 text-white btn-hover-colour"
                 onClick={() => setShow(false)}
               >
                 Close
@@ -61,4 +63,4 @@ const ProfileModel = ({ show, setShow }) => {
   );
 };
 
-export default ProfileModel;
+export default ProfileModal;

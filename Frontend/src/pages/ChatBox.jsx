@@ -6,11 +6,14 @@ import { FadeLoader } from 'react-spinners';
 import AvatarRow from '../components/AvatarRow.jsx';
 import { fetchChatMessages } from '../service/MessageService.js';
 import GroupChatSettingsModal from './GroupChatSettingsModal.jsx';
+import ProfileModal from '../components/ProfileModal.jsx';
+import ChatScrollView from './ChatScrollView.jsx';
 
 function ChatBox({ fetchAgain, setFetchAgain }) {
   const [loading, setLoading] = useState(false);
   const [groupchat, setGroupChat] = useState(false);
-  const [message, setMessages] = useState([]);
+  const [singleChat, setSingleChat] = useState(false);
+  const [messages, setMessages] = useState([]);
 
   const { selectedChat } = useChat();
   const { currentUser } = useAuth();
@@ -60,11 +63,22 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
             </span>
             {/* avatar with name  */}
             {!selectedChat.isGroupChat ? (
-              <AvatarRow
-                img={otherUser?.picture}
-                name={otherName}
-                className="ms-3"
-              />
+              <>
+                <div onClick={() => setSingleChat(true)}>
+                  <AvatarRow
+                    img={otherUser?.picture}
+                    name={otherName}
+                    className="ms-3"
+                  />
+                </div>
+                {singleChat && (
+                  <ProfileModal
+                    show={singleChat}
+                    setShow={setSingleChat}
+                    user={otherUser}
+                  />
+                )}
+              </>
             ) : (
               <>
                 <div onClick={() => setGroupChat(true)}>
@@ -110,7 +124,9 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
                   msOverflowStyle: 'none',
                   WebkitScrollbar: { display: 'none' },
                 }}
-              ></div>
+              >
+                <ChatScrollView messages={messages} />
+              </div>
             )}
 
             <div>
