@@ -4,12 +4,9 @@ import formatApiError from '../utils/FormatApiError.js';
 
 const fetchChatMessages = async (chatId, token) => {
   try {
-    const config = {
-      headers: { Authorization: `Bearer ${token}` },
-    };
     const { data } = await axios.get(
       `${server}/messages/chat/${chatId}`,
-      config
+      { headers: { Authorization: `Bearer ${token}` } }
     );
     return data;
   } catch (error) {
@@ -17,4 +14,23 @@ const fetchChatMessages = async (chatId, token) => {
   }
 };
 
-export { fetchChatMessages };
+// Send a new message
+const sendMessage = async (content, chatId, token) => {
+  try {
+    const { data } = await axios.post(
+      `${server}/messages`,
+      { content, chatId },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return data;
+  } catch (error) {
+    throw formatApiError(error);
+  }
+};
+
+export { fetchChatMessages, sendMessage };

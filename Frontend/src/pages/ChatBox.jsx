@@ -4,16 +4,21 @@ import { useAuth } from '../contexts/AuthContext';
 import { getSenderData } from '../utils/ChatLogics.js';
 import { FadeLoader } from 'react-spinners';
 import AvatarRow from '../components/AvatarRow.jsx';
-import { fetchChatMessages } from '../service/MessageService.js';
+import {
+  fetchChatMessages,
+  sendMessage,
+} from '../service/MessageService.js';
 import GroupChatSettingsModal from './GroupChatSettingsModal.jsx';
 import ProfileModal from '../components/ProfileModal.jsx';
 import ChatScrollView from './ChatScrollView.jsx';
+import showToast from '../utils/ToastHelper.js';
 
 function ChatBox({ fetchAgain, setFetchAgain }) {
   const [loading, setLoading] = useState(false);
   const [groupchat, setGroupChat] = useState(false);
   const [singleChat, setSingleChat] = useState(false);
   const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
 
   const { selectedChat } = useChat();
   const { currentUser } = useAuth();
@@ -38,6 +43,30 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !selectedChat?._id) return;
+    try {
+      const data = await sendMessage(
+        newMessage.trim(),
+        selectedChat._id,
+        currentUser.token
+      );
+      setMessages((prev) => [...prev, data]);
+      setNewMessage('');
+    } catch (error) {
+      showToast(error, 'error');
+    }
+  };
+
+  const handleKeyPress = (event) => {
+    if (event.key === 'Enter' && newMessage) handleSendMessage();
+  };
+
+  const typingHandler = (e) => {
+    const value = e.target.value;
+    setNewMessage(value);
   };
 
   useEffect(() => {
@@ -132,12 +161,16 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
             <div>
               <div className="input-group">
                 <input
+                  value={newMessage}
+                  onChange={typingHandler}
+                  onKeyDown={handleKeyPress}
                   style={{ height: '50px' }}
                   type="text"
                   className="form-control mt-2 border-dark"
                   placeholder="Enter your message…"
                 />
                 <button
+                  onClick={() => handleSendMessage()}
                   style={{
                     height: '50px',
                     backgroundColor: '#38B2AC',
