@@ -11,7 +11,6 @@ import {
 import {
   signupSchema,
   loginSchema,
-  getUserByIdSchema,
   deleteUserByIdSchema,
 } from '../utils/Schema.js';
 import { validateSchema } from '../utils/ValidateSchema.js';
@@ -36,13 +35,8 @@ userRouter.post(
 // get all users except logged-in user
 userRouter.get('/', verifyToken, wrapAsync(allUsers));
 
-// get user details by ID
-userRouter.get(
-  '/:id',
-  verifyToken,
-  validateSchema(getUserByIdSchema),
-  wrapAsync(getUserById)
-);
+// get user details
+userRouter.get('/me', verifyToken, wrapAsync(getUserById));
 
 // delete user by ID
 userRouter.delete(
