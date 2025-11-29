@@ -3,26 +3,30 @@ const connectToSocket = (io) => {
     console.log('Socket connected:', socket.id);
     let userId = null;
 
-    // Setup user room
+    // setup user room
     socket.on('setup', (userData) => {
       userId = userData._id;
       socket.join(userId);
       socket.emit('connected');
     });
 
-    // Join chat room
-    socket.on('join chat', (room) => socket.join(room));
+    // join chat room
+    socket.on('join chat', (roomId) => {
+      socket.join(roomId);
+      console.log(`Socket ${socket.id} joined room ${roomId}`);
+    });
 
-    // New message
+    // typing indicators
+    socket.on('typing', (roomId) => socket.to(roomId).emit('typing'));
+    socket.on('stop typing', (roomId) =>
+      socket.to(roomId).emit('stop typing')
+    );
+
+    // new message
     socket.on('new message', (newMsg) => {
       const chat = newMsg.chat;
-      if (!chat?.users) return;
-
-      chat.users.forEach((user) => {
-        if (user._id !== newMsg.sender._id) {
-          socket.to(user._id).emit('message received', newMsg);
-        }
-      });
+      if (!chat?._id) return;
+      socket.to(chat._id).emit('message received', newMsg);
     });
   });
 };

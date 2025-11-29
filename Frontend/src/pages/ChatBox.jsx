@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FadeLoader } from 'react-spinners';
 import io from 'socket.io-client';
 
@@ -25,6 +25,10 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [socketConnected, setSocketConnected] = useState(false);
+  const [typing, setTyping] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+
+  const typingTimeoutRef = useRef(null);
 
   const { selectedChat } = useChat();
   const { currentUser } = useAuth();
@@ -43,9 +47,12 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
     socket = io(ENDPOINT);
     socket.emit('setup', currentUser);
     socket.on('connected', () => setSocketConnected(true));
+    socket.on('typing', () => setIsTyping(true));
+    socket.on('stop typing', () => setIsTyping(false));
     return () => socket.disconnect();
   }, [currentUser]);
 
+  // listen for incoming messages
   useEffect(() => {
     if (!socket) return;
     const handler = (newMsg) => {
@@ -84,6 +91,7 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedChat?._id) return;
+    socket.emit('stop typing', selectedChat._id);
     try {
       const data = await sendMessage(
         newMessage.trim(),
@@ -105,6 +113,30 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
   const typingHandler = (e) => {
     const value = e.target.value;
     setNewMessage(value);
+
+    if (!socketConnected || !selectedChat?._id) return;
+
+    // If input becomes empty, stop typing instantly
+    if (value.trim() === '') {
+      socket.emit('stop typing', selectedChat._id);
+      if (typingTimeoutRef.current)
+        clearTimeout(typingTimeoutRef.current);
+      setTyping(false);
+      return;
+    }
+
+    // Start typing
+    if (!typing) {
+      setTyping(true);
+      socket.emit('typing', selectedChat._id);
+    }
+
+    if (typingTimeoutRef.current)
+      clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      socket.emit('stop typing', selectedChat._id);
+      setTyping(false);
+    }, 2000);
   };
 
   return (
@@ -193,6 +225,9 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
             )}
 
             <div>
+              {isTyping && (
+                <p className="ms-2 mb-2 text-secondary">Typing...</p>
+              )}
               <div className="input-group">
                 <input
                   value={newMessage}

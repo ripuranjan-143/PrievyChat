@@ -13,15 +13,17 @@ function ChatScrollView({ messages }) {
 
   // auto scroll to bottom when messages change
   useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messages && messages.length > 0) {
+      scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages]);
 
   // if no messages, show placeholder text
   if (!messages || messages.length === 0) {
     return (
       <div
-        className="d-flex justify-content-center align-items-center text-muted mb-5"
-        style={{ height: '100%', fontStyle: 'italic'}}
+        className="d-flex justify-content-center align-items-center text-muted"
+        style={{ height: '100%', fontStyle: 'italic' }}
       >
         Send a message to start the conversation
       </div>
@@ -29,7 +31,14 @@ function ChatScrollView({ messages }) {
   }
 
   return (
-    <div className="px-2 py-2 " style={{ height: '100%' }}>
+    <div
+      className="px-2 py-2 overflow-y-auto"
+      style={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
       {messages &&
         messages.map((m, i) => {
           return (
@@ -85,8 +94,8 @@ function ChatScrollView({ messages }) {
           );
         })}
 
-      {/* Empty div for auto-scroll */}
-      <div ref={scrollRef}></div>
+      {/* only render scrollRef if messages exist */}
+      {messages.length > 0 && <div ref={scrollRef}></div>}
     </div>
   );
 }
