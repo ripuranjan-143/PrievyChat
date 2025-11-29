@@ -1,4 +1,5 @@
 import { StatusCodes } from 'http-status-codes';
+
 import { User } from '../models/UserModel.js';
 import { Chat } from '../models/ChatModel.js';
 import { Message } from '../models/MessageModel.js';
@@ -13,16 +14,19 @@ const signup = async (req, res) => {
   const { name, email, password, picture } = req.body;
 
   // check if email already exists
-  const existingUser = await User.findOne({ email });
+  const existingUser = await User.findOne({
+    email: email.toLowerCase(),
+  });
   if (existingUser) {
     throw new ExpressError(
       StatusCodes.CONFLICT,
-      'Email is already used, try different email'
+      'Email is already used, try different email!'
     );
   }
 
   const hashedPassword = await hashPassword(password);
 
+  // create new user
   const newUser = new User({
     name,
     email: email.toLowerCase(),
@@ -33,14 +37,8 @@ const signup = async (req, res) => {
   const savedUser = await newUser.save();
   const token = genToken(savedUser._id);
 
-  // remove password from output
-  const userResponse = savedUser.toObject();
-  delete userResponse.password;
-
   res.status(StatusCodes.CREATED).json({
-    success: true,
-    message: 'User created successfully',
-    ...userResponse,
+    message: 'User created successfully!',
     token,
   });
 };
@@ -53,7 +51,7 @@ const login = async (req, res) => {
   if (!user) {
     throw new ExpressError(
       StatusCodes.UNAUTHORIZED,
-      'Invalid email or password'
+      'Invalid email or password!'
     );
   }
 
@@ -62,20 +60,14 @@ const login = async (req, res) => {
   if (!isMatched) {
     throw new ExpressError(
       StatusCodes.UNAUTHORIZED,
-      'Invalid email or password'
+      'Invalid email or password!'
     );
   }
 
   const token = genToken(user._id);
 
-  // prepare response
-  const userResponse = user.toObject();
-  delete userResponse.password;
-
   res.status(StatusCodes.OK).json({
-    success: true,
-    message: 'User logged in successfully',
-    ...userResponse,
+    message: 'Login successfull!',
     token,
   });
 };
@@ -91,7 +83,7 @@ const allUsers = async (req, res) => {
       }
     : {};
 
-  // fetch all users matching the search filter, excluding the logged-in user
+  // fetch all users , excluding the logged-in user
   const users = await User.find(keyword).find({
     _id: { $ne: req.user.id },
   });
@@ -103,29 +95,22 @@ const allUsers = async (req, res) => {
     return obj;
   });
 
-  return res.status(StatusCodes.OK).json({
-    success: true,
-    users: cleanUsers,
-  });
+  return res.status(StatusCodes.OK).json(cleanUsers);
 };
 
 const getUserById = async (req, res) => {
-  // only allow the logged-in user to access their own data
-  if (req.user.id !== req.params.id) {
-    throw new ExpressError(
-      StatusCodes.FORBIDDEN,
-      'You are not authorized to access this user'
-    );
-  }
-  // fetch user without password
-  const user = await User.findById(req.params.id).select('-password');
+  // find the user by id of authentication
+  const user = await User.findById(req.user.id).select('-password');
   if (!user) {
-    throw new ExpressError(StatusCodes.NOT_FOUND, 'User not found');
+    throw new ExpressError(StatusCodes.NOT_FOUND, 'User not found!');
   }
 
   res.status(StatusCodes.OK).json({
-    success: true,
-    user,
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    picture: user.picture,
+    message: 'User fetched successfully!',
   });
 };
 
@@ -134,14 +119,14 @@ const deleteUserById = async (req, res) => {
   if (req.user.id !== req.params.id) {
     throw new ExpressError(
       StatusCodes.FORBIDDEN,
-      'You are not authorized to access this user'
+      'You are not authorized to access this user!'
     );
   }
 
   // find the user
   const user = await User.findById(req.params.id);
   if (!user) {
-    throw new ExpressError(StatusCodes.NOT_FOUND, 'User not found');
+    throw new ExpressError(StatusCodes.NOT_FOUND, 'User not found!');
   }
 
   // delete all messages sent by the user
@@ -157,12 +142,11 @@ const deleteUserById = async (req, res) => {
   await Chat.deleteMany({ users: { $size: 0 } });
 
   // delete the user
-  await User.findByIdAndDelete(req.user.id);
+  await User.findByIdAndDelete(req.params.id);
 
   res.status(StatusCodes.OK).json({
-    success: true,
     message:
-      'User and all related chats/messages deleted successfully',
+      'User and all related chats/messages deleted successfully!',
   });
 };
 
