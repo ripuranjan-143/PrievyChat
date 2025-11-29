@@ -1,41 +1,23 @@
-import express from 'express';
 import mongoose from 'mongoose';
-import cors from 'cors';
-import { StatusCodes } from 'http-status-codes';
+import http from 'http';
+import { Server } from 'socket.io';
 
 import Config from './utils/Config.js';
-import { ExpressError  } from './utils/ExpressError.js';
-import { mainRouter } from './routes/MainRouter.js';
+import app from './app.js';
+import { connectToSocket } from './socket/SocketManager.js';
 
-const app = express();
+// HTTP + Socket.IO Server
+const server = http.createServer(app);
 
-// middleware to parse JSON request bodies
-app.use(express.json());
-
-// enable CORS so frontend can communicate with backend
-app.use(cors());
-
-// routes
-app.use('/api/v1', mainRouter);
-
-// route not found handler
-app.use((req, res, next) => {
-  next(new ExpressError (StatusCodes.NOT_FOUND, 'Page Not Found'));
+const io = new Server(server, {
+  pingTimeout: 60000,
+  cors: {
+    origin: 'http://localhost:5173',
+  },
 });
 
-// global error handler
-app.use((err, req, res, next) => {
-  console.log('Error : ', err);
-  let statusCode =
-    err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
-  let message = err.message || 'Something went wrong!';
-
-  // In production, hide sensitive internal error details
-  if (process.env.NODE_ENV === 'production' && statusCode === 500) {
-    message = 'Internal server error. Please try again later.';
-  }
-  res.status(statusCode).json({ success: false, message });
-});
+// Connect socket logic
+connectToSocket(io);
 
 // connect to MongoDB and start the server
 const start = async () => {
@@ -43,7 +25,7 @@ const start = async () => {
     await mongoose.connect(Config.mongoUri);
     console.log(`Connected to database...`);
 
-    app.listen(Config.port, () => {
+    server.listen(Config.port, () => {
       console.log(`Server listening on port ${Config.port}...`);
     });
   } catch (error) {

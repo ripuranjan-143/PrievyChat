@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { FadeLoader } from 'react-spinners';
+import io from 'socket.io-client';
+
 import { useChat } from '../contexts/ChatStateProvider';
 import { useAuth } from '../contexts/AuthContext';
 import { getSenderData } from '../utils/ChatLogics.js';
-import { FadeLoader } from 'react-spinners';
 import AvatarRow from '../components/AvatarRow.jsx';
 import {
   fetchChatMessages,
@@ -13,12 +15,16 @@ import ProfileModal from '../components/ProfileModal.jsx';
 import ChatScrollView from './ChatScrollView.jsx';
 import showToast from '../utils/ToastHelper.js';
 
+const ENDPOINT = 'http://localhost:8080';
+let socket, selectedChatCompare;
+
 function ChatBox({ fetchAgain, setFetchAgain }) {
   const [loading, setLoading] = useState(false);
   const [groupchat, setGroupChat] = useState(false);
   const [singleChat, setSingleChat] = useState(false);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [socketConnected, setSocketConnected] = useState(false);
 
   const { selectedChat } = useChat();
   const { currentUser } = useAuth();
@@ -27,6 +33,36 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
     selectedChat && !selectedChat.isGroupChat
       ? getSenderData(currentUser, selectedChat.users)
       : { name: '', user: null };
+
+  useEffect(() => {
+    fetchMessages();
+    selectedChatCompare = selectedChat;
+  }, [selectedChat]);
+
+  useEffect(() => {
+    socket = io(ENDPOINT);
+    socket.emit('setup', currentUser);
+    socket.on('connected', () => setSocketConnected(true));
+    return () => socket.disconnect();
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handler = (newMsg) => {
+      if (
+        !selectedChatCompare ||
+        selectedChatCompare._id !== newMsg.chat._id
+      ) {
+        // give notification
+      } else {
+        setMessages((prev) => [...prev, newMsg]);
+      }
+    };
+    socket.on('message received', handler);
+    return () => {
+      if (socket?.off) socket.off('message received', handler);
+    };
+  }, []);
 
   const fetchMessages = async () => {
     if (!selectedChat) return;
@@ -37,6 +73,7 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
         currentUser.token
       );
       setMessages(data);
+      socket.emit('join chat', selectedChat._id);
     } catch (error) {
       console.log(error);
       showToast(error, 'error');
@@ -53,6 +90,7 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
         selectedChat._id,
         currentUser.token
       );
+      socket.emit('new message', data);
       setMessages((prev) => [...prev, data]);
       setNewMessage('');
     } catch (error) {
@@ -68,10 +106,6 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
     const value = e.target.value;
     setNewMessage(value);
   };
-
-  useEffect(() => {
-    fetchMessages();
-  }, [selectedChat]);
 
   return (
     <div
@@ -175,7 +209,7 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
                     height: '50px',
                     backgroundColor: '#38B2AC',
                   }}
-                  className="btn mt-2 "
+                  className="btn mt-2 border-dark hover-colour"
                   type="button"
                 >
                   <i className="fa-regular fa-paper-plane"></i>
