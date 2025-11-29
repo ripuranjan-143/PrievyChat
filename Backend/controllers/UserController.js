@@ -26,7 +26,6 @@ const signup = async (req, res) => {
 
   const hashedPassword = await hashPassword(password);
 
-  // create new user
   const newUser = new User({
     name,
     email: email.toLowerCase(),
@@ -36,6 +35,10 @@ const signup = async (req, res) => {
 
   const savedUser = await newUser.save();
   const token = genToken(savedUser._id);
+
+  // remove password from output
+  const userResponse = savedUser.toObject();
+  delete userResponse.password;
 
   res.status(StatusCodes.CREATED).json({
     message: 'User created successfully!',
@@ -95,7 +98,10 @@ const allUsers = async (req, res) => {
     return obj;
   });
 
-  return res.status(StatusCodes.OK).json(cleanUsers);
+  return res.status(StatusCodes.OK).json({
+    success: true,
+    users: cleanUsers,
+  });
 };
 
 const getUserById = async (req, res) => {

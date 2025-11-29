@@ -1,7 +1,7 @@
 import Joi from 'joi';
 
 const nameField = Joi.string().min(4).max(25).trim().messages({
-  'string.min': 'Name must be at least 3 characters long',
+  'string.min': 'Name must be at least 4 characters long',
   'string.max': 'Name cannot exceed 25 characters',
 });
 
@@ -43,4 +43,69 @@ const deleteUserByIdSchema = Joi.object({
   }).required(),
 });
 
-export { signupSchema, loginSchema, deleteUserByIdSchema };
+// create/access chat schema
+const oneToOneChatSchema = Joi.object({
+  body: Joi.object({
+    userId: idField.required(),
+  }).required(),
+});
+
+//  create group chat schema
+const createGroupChatSchema = Joi.object({
+  body: Joi.object({
+    name: nameField.required().messages({
+      'string.empty': 'Group name is required',
+    }),
+    users: Joi.array()
+      .items(idField)
+      .min(2) // minimum 2 users from frontend
+      .unique()
+      .required()
+      .messages({
+        'array.min':
+          'At least 2 users are required to create a group chat',
+        'array.base': 'Users must be an array of user IDs',
+      }),
+  }).required(),
+});
+
+// rename group chat schema
+const updateGroupChatSchema = Joi.object({
+  body: Joi.object({
+    chatId: idField.required().messages({
+      'any.required': 'chatId is required',
+    }),
+
+    chatName: nameField.required().messages({
+      'string.empty': 'chatName cannot be empty',
+      'any.required': 'chatName is required',
+    }),
+  }).required(),
+});
+
+// add a user to a group
+const addUserToGroupSchema = Joi.object({
+  body: Joi.object({
+    chatId: idField.required(),
+    userId: idField.required(),
+  }).required(),
+});
+
+// remove a user from a group
+const removeUserFromGroupSchema = Joi.object({
+  body: Joi.object({
+    chatId: idField.required(),
+    userId: idField.required(),
+  }).required(),
+});
+
+export {
+  signupSchema,
+  loginSchema,
+  deleteUserByIdSchema,
+  oneToOneChatSchema,
+  createGroupChatSchema,
+  updateGroupChatSchema,
+  addUserToGroupSchema,
+  removeUserFromGroupSchema,
+};
