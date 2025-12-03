@@ -22,7 +22,7 @@ function ChatScrollView({ messages }) {
   if (!messages || messages.length === 0) {
     return (
       <div
-        className="d-flex justify-content-center align-items-center text-muted"
+        className="d-flex justify-content-center align-items-end text-muted"
         style={{ height: '100%', fontStyle: 'italic' }}
       >
         Send a message to start the conversation
@@ -32,7 +32,7 @@ function ChatScrollView({ messages }) {
 
   return (
     <div
-      className="px-2 py-2 overflow-y-auto"
+      className="px-2"
       style={{
         height: '100%',
         display: 'flex',

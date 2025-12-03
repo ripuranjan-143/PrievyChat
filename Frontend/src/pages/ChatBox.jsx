@@ -1,22 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
-import { FadeLoader } from 'react-spinners';
 import io from 'socket.io-client';
 
 import { useChat } from '../contexts/ChatStateProvider';
 import { useAuth } from '../contexts/AuthContext';
 import { getSenderData } from '../utils/ChatLogics.js';
-import AvatarRow from '../components/AvatarRow.jsx';
 import {
   fetchChatMessages,
   sendMessage,
 } from '../service/MessageService.js';
-import GroupChatSettingsModal from './GroupChatSettingsModal.jsx';
-import ProfileModal from '../components/ProfileModal.jsx';
-import ChatScrollView from './ChatScrollView.jsx';
 import showToast from '../utils/ToastHelper.js';
+import ChatHeader from '../components/ChatHeader.jsx';
+import ChatMessages from '../components/ChatMessages.jsx';
+import ChatInput from '../components/ChatInput.jsx';
+import createTypingHandler from '../utils/TypingHandler.js';
 
 const ENDPOINT = 'http://localhost:8080';
-let socket, selectedChatCompare;
+let socket;
 
 function ChatBox({ fetchAgain, setFetchAgain }) {
   const [loading, setLoading] = useState(false);
@@ -29,6 +28,7 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
   const [isTyping, setIsTyping] = useState(false);
 
   const typingTimeoutRef = useRef(null);
+  const activeChatRef = useRef(null); // useRef for active chat
 
   const { selectedChat } = useChat();
   const { currentUser } = useAuth();
@@ -39,48 +39,79 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
       : { name: '', user: null };
 
   useEffect(() => {
+    activeChatRef.current = selectedChat; // update ref
+    if (activeChatRef.current?._id && socket) {
+      socket.emit('stop typing', activeChatRef.current._id);
+      socket.emit('leave chat', activeChatRef.current._id);
+    }
     fetchMessages();
-    selectedChatCompare = selectedChat;
   }, [selectedChat]);
 
   useEffect(() => {
     socket = io(ENDPOINT);
     socket.emit('setup', currentUser);
     socket.on('connected', () => setSocketConnected(true));
-    socket.on('typing', () => setIsTyping(true));
-    socket.on('stop typing', () => setIsTyping(false));
     return () => socket.disconnect();
   }, [currentUser]);
 
   // listen for incoming messages
   useEffect(() => {
     if (!socket) return;
-    const handler = (newMsg) => {
+    const messageHandler = (newMsg) => {
       if (
-        !selectedChatCompare ||
-        selectedChatCompare._id !== newMsg.chat._id
+        !activeChatRef.current ||
+        activeChatRef.current._id !== newMsg.chat._id
       ) {
         // give notification
       } else {
         setMessages((prev) => [...prev, newMsg]);
       }
     };
-    socket.on('message received', handler);
+
+    const typingHandler = (roomId) => {
+      if (
+        activeChatRef.current &&
+        activeChatRef.current._id === roomId
+      )
+        setIsTyping(true);
+    };
+
+    const stopTypingHandler = (roomId) => {
+      if (
+        activeChatRef.current &&
+        activeChatRef.current._id === roomId
+      )
+        setIsTyping(false);
+    };
+
+    // register listeners
+    socket.on('message received', messageHandler);
+    socket.on('typing', typingHandler);
+    socket.on('stop typing', stopTypingHandler);
     return () => {
-      if (socket?.off) socket.off('message received', handler);
+      socket.off('message received', messageHandler);
+      socket.off('typing', typingHandler);
+      socket.off('stop typing', stopTypingHandler);
     };
   }, []);
 
+  // get all messages
   const fetchMessages = async () => {
     if (!selectedChat) return;
     try {
       setLoading(true);
+      // leave the previous room
+      if (activeChatRef.current?._id) {
+        socket.emit('leave chat', activeChatRef.current._id);
+      }
       const data = await fetchChatMessages(
         selectedChat._id,
         currentUser.token
       );
       setMessages(data);
+      // join new room
       socket.emit('join chat', selectedChat._id);
+      activeChatRef.current = selectedChat; // ← update ref
     } catch (error) {
       console.log(error);
       showToast(error, 'error');
@@ -89,6 +120,7 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
     }
   };
 
+  // send messages
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedChat?._id) return;
     socket.emit('stop typing', selectedChat._id);
@@ -110,34 +142,16 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
     if (event.key === 'Enter' && newMessage) handleSendMessage();
   };
 
-  const typingHandler = (e) => {
-    const value = e.target.value;
-    setNewMessage(value);
-
-    if (!socketConnected || !selectedChat?._id) return;
-
-    // If input becomes empty, stop typing instantly
-    if (value.trim() === '') {
-      socket.emit('stop typing', selectedChat._id);
-      if (typingTimeoutRef.current)
-        clearTimeout(typingTimeoutRef.current);
-      setTyping(false);
-      return;
-    }
-
-    // Start typing
-    if (!typing) {
-      setTyping(true);
-      socket.emit('typing', selectedChat._id);
-    }
-
-    if (typingTimeoutRef.current)
-      clearTimeout(typingTimeoutRef.current);
-    typingTimeoutRef.current = setTimeout(() => {
-      socket.emit('stop typing', selectedChat._id);
-      setTyping(false);
-    }, 2000);
-  };
+  // typing handler
+  const typingHandler = createTypingHandler(
+    socket,
+    socketConnected,
+    activeChatRef,
+    typing,
+    setTyping,
+    typingTimeoutRef,
+    setNewMessage
+  );
 
   return (
     <div
@@ -150,108 +164,34 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
     >
       {selectedChat ? (
         <>
-          {/* header */}
-          <div className="d-flex align-items-center mb-1">
-            {/* back arrow button */}
-            <span style={{ cursor: 'pointer' }}>
-              <i className="fa-solid fa-arrow-left"></i>
-            </span>
-            {/* avatar with name  */}
-            {!selectedChat.isGroupChat ? (
-              <>
-                <div onClick={() => setSingleChat(true)}>
-                  <AvatarRow
-                    img={otherUser?.picture}
-                    name={otherName}
-                    className="ms-3"
-                  />
-                </div>
-                {singleChat && (
-                  <ProfileModal
-                    show={singleChat}
-                    setShow={setSingleChat}
-                    user={otherUser}
-                  />
-                )}
-              </>
-            ) : (
-              <>
-                <div onClick={() => setGroupChat(true)}>
-                  <AvatarRow
-                    img={selectedChat?.picture}
-                    name={selectedChat.chatName.toUpperCase()}
-                    className="ms-3"
-                  />
-                </div>
-                {groupchat && (
-                  <GroupChatSettingsModal
-                    groupChat={groupchat}
-                    setGroupChat={setGroupChat}
-                    fetchAgain={fetchAgain}
-                    setFetchAgain={setFetchAgain}
-                    fetchMessages={fetchMessages}
-                  />
-                )}
-              </>
-            )}
-          </div>
-          {/* body */}
-          <div
-            className="d-flex flex-column justify-content-end pt-2 w-100 h-100 rounded-2 overflow-hidden"
-            style={{ background: '#ecf3f2ff' }}
-          >
-            {loading ? (
-              <div
-                className="d-flex justify-content-center align-items-center"
-                style={{ height: '100vh' }}
-              >
-                <FadeLoader
-                  color="#38B2AC"
-                  loading={true}
-                  size={150}
-                />
-              </div>
-            ) : (
-              <div
-                className="overflow-y-scroll"
-                style={{
-                  scrollbarWidth: 'none',
-                  msOverflowStyle: 'none',
-                  WebkitScrollbar: { display: 'none' },
-                }}
-              >
-                <ChatScrollView messages={messages} />
-              </div>
-            )}
+          {/* chat header */}
+          <ChatHeader
+            selectedChat={selectedChat}
+            otherUser={otherUser}
+            otherName={otherName}
+            singleChat={singleChat}
+            groupchat={groupchat}
+            setSingleChat={setSingleChat}
+            setGroupChat={setGroupChat}
+            fetchAgain={fetchAgain}
+            setFetchAgain={setFetchAgain}
+            fetchMessages={fetchMessages}
+          />
 
-            <div>
-              {isTyping && (
-                <p className="ms-2 mb-2 text-secondary">Typing...</p>
-              )}
-              <div className="input-group">
-                <input
-                  value={newMessage}
-                  onChange={typingHandler}
-                  onKeyDown={handleKeyPress}
-                  style={{ height: '50px' }}
-                  type="text"
-                  className="form-control mt-2 border-dark"
-                  placeholder="Enter your message…"
-                />
-                <button
-                  onClick={() => handleSendMessage()}
-                  style={{
-                    height: '50px',
-                    backgroundColor: '#38B2AC',
-                  }}
-                  className="btn mt-2 border-dark hover-colour"
-                  type="button"
-                >
-                  <i className="fa-regular fa-paper-plane"></i>
-                </button>
-              </div>
-            </div>
-          </div>
+          {/*chat body*/}
+          <ChatMessages
+            loading={loading}
+            messages={messages}
+            isTyping={isTyping}
+          />
+
+          {/* input box */}
+          <ChatInput
+            newMessage={newMessage}
+            typingHandler={typingHandler}
+            handleKeyPress={handleKeyPress}
+            handleSendMessage={handleSendMessage}
+          />
         </>
       ) : (
         <div className="d-flex flex-column align-items-center justify-content-center text-center h-100">

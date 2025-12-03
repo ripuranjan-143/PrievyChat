@@ -52,12 +52,7 @@ const MyChats = ({ fetchAgain }) => {
           height: '79.7vh',
         }}
       >
-        {chats === null || chats === undefined ? (
-          // State before data arrives
-          <div className="d-flex ps-2 fs-4 justify-content-center align-items-center h-100 w-100">
-            <p>Loading...</p>
-          </div>
-        ) : chats.length === 0 ? (
+        {chats.length === 0 ? (
           // When array exists but is empty
           <div className="d-flex ps-2 fs-5 justify-content-center align-items-center h-100 w-100">
             <p>Search a user to start the chat</p>

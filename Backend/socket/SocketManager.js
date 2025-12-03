@@ -1,6 +1,7 @@
 const connectToSocket = (io) => {
   io.on('connection', (socket) => {
     console.log('Socket connected:', socket.id);
+
     let userId = null;
 
     // setup user room
@@ -13,14 +14,21 @@ const connectToSocket = (io) => {
     // join chat room
     socket.on('join chat', (roomId) => {
       socket.join(roomId);
-      console.log(`Socket ${socket.id} joined room ${roomId}`);
+    });
+
+    // leave chat room
+    socket.on('leave chat', (roomId) => {
+      socket.leave(roomId);
     });
 
     // typing indicators
-    socket.on('typing', (roomId) => socket.to(roomId).emit('typing'));
-    socket.on('stop typing', (roomId) =>
-      socket.to(roomId).emit('stop typing')
-    );
+    socket.on('typing', (roomId) => {
+      socket.to(roomId).emit('typing', roomId);
+    });
+
+    socket.on('stop typing', (roomId) => {
+      socket.to(roomId).emit('stop typing', roomId);
+    });
 
     // new message
     socket.on('new message', (newMsg) => {
