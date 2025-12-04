@@ -30,7 +30,7 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
   const typingTimeoutRef = useRef(null);
   const activeChatRef = useRef(null); // useRef for active chat
 
-  const { selectedChat } = useChat();
+  const { selectedChat, notification, setNotification } = useChat();
   const { currentUser } = useAuth();
 
   const { name: otherName, user: otherUser } =
@@ -46,7 +46,9 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
     }
     fetchMessages();
   }, [selectedChat]);
-
+  useEffect(() => {
+    console.log('notification', notification);
+  }, [notification]);
   useEffect(() => {
     socket = io(ENDPOINT);
     socket.emit('setup', currentUser);
@@ -62,7 +64,12 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
         !activeChatRef.current ||
         activeChatRef.current._id !== newMsg.chat._id
       ) {
-        // give notification
+        setNotification((prev) => {
+          const exists = prev.some((n) => n._id === newMsg._id);
+          if (exists) return prev;
+          return [newMsg, ...prev];
+        });
+        setFetchAgain((prev) => !prev);
       } else {
         setMessages((prev) => [...prev, newMsg]);
       }

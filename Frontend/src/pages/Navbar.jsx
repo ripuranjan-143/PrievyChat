@@ -1,22 +1,33 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import ProfileModal from '../components/ProfileModal.jsx';
 import UserSearchDrawer from './UserSearchDrawer.jsx';
 import AvatarRow from '../components/AvatarRow.jsx';
+import { useChat } from '../contexts/ChatStateProvider';
+import { getSenderData } from '../utils/ChatLogics.js';
 
 function Navbar({ setFetchAgain }) {
   const [showProfile, setShowProfile] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showNotification, setShowNotification] = useState();
 
   const { currentUser, handleLogout } = useAuth();
+  const { setSelectedChat, notification, setNotification } =
+    useChat();
+  useEffect(() => {
+    console.log('Navbar notifications:', notification);
+  }, [notification]);
 
   return (
     <>
       {/* invisible overlay (closes menu) */}
-      {showUserMenu && (
+      {(showUserMenu || showNotification) && (
         <div
-          onClick={() => setShowUserMenu(false)}
+          onClick={() => {
+            setShowUserMenu(false);
+            setShowNotification(false);
+          }}
           style={{
             position: 'fixed',
             top: 0,
@@ -59,13 +70,77 @@ function Navbar({ setFetchAgain }) {
           </div>
 
           {/* bell icon */}
-          <div
-            className="me-3 hover-colour"
-            style={{ borderRadius: '10px' }}
-          >
-            <button className="btn p-1">
+          <div className="position-relative me-3">
+            <button
+              className="btn p-1 position-relative hover-colour"
+              onClick={() => setShowNotification(!showNotification)}
+            >
+              {notification.length > 0 && (
+                <span
+                  className="position-absolute top-0 translate-middle badge rounded-pill bg-danger"
+                  style={{
+                    fontSize: '10px',
+                    padding: '3px 5px',
+                    marginTop: '5px',
+                  }}
+                >
+                  {notification.length}
+                </span>
+              )}
               <i className="fa-solid fa-bell fs-6"></i>
             </button>
+
+            {showNotification && (
+              <div
+                className="shadow-lg px-1 pb-1 bg-white mt-2"
+                style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: '45px',
+                  borderRadius: '5px',
+                  minWidth: '250px',
+                  maxHeight: '300px',
+                  overflowY: 'auto',
+                  zIndex: 999,
+                }}
+              >
+                {notification.length === 0 && (
+                  <p className="text-center p-1 hover-colour mb-0 rounded">
+                    No New Messages
+                  </p>
+                )}
+
+                {notification.map((notif) => {
+                  const { name } = getSenderData(
+                    currentUser,
+                    notif.chat.users,
+                    notif.chat.isGroupChat,
+                    notif.chat.chatName
+                  );
+
+                  return (
+                    <button
+                      key={notif._id}
+                      className="dropdown-item hover-colour btn-hover-colour px-2 py-1 rounded mt-1"
+                      style={{ whiteSpace: 'normal' }}
+                      onClick={() => {
+                        setSelectedChat(notif.chat);
+                        setNotification(
+                          notification.filter(
+                            (n) => n._id !== notif._id
+                          )
+                        );
+                        setShowNotification(false);
+                      }}
+                    >
+                      {notif.chat.isGroupChat
+                        ? `New Message in ${name}`
+                        : `New Message from ${name}`}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* custom user dropdown */}

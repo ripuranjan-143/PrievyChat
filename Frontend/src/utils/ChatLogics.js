@@ -1,17 +1,19 @@
-// returns the opposite user (the one with chatting)
-export const getSenderData = (currentUser, users) => {
-  if (!currentUser || !users) {
-    return { name: 'Unknown', user: null };
-  }
+// returns display name and user info for a chat (1-on-1 or group)
+export const getSenderData = (
+  currentUser,
+  users = [],
+  isGroupChat = false,
+  chatName = 'Unnamed Group'
+) => {
+  if (!currentUser) return { name: 'Unknown', user: null };
 
-  // find the user that is NOT the logged-in
-  const otherUser = users.find(
-    (user) => user._id !== currentUser._id
-  );
+  const otherUser = !isGroupChat
+    ? users.find((u) => u._id !== currentUser._id)
+    : null;
 
   return {
-    name: otherUser?.name || 'Unknown',
-    user: otherUser || null,
+    name: isGroupChat ? chatName : otherUser?.name || 'Unknown',
+    user: isGroupChat ? null : otherUser || null,
   };
 };
 

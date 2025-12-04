@@ -25,16 +25,25 @@ const connectToSocket = (io) => {
     socket.on('typing', (roomId) => {
       socket.to(roomId).emit('typing', roomId);
     });
-
     socket.on('stop typing', (roomId) => {
       socket.to(roomId).emit('stop typing', roomId);
     });
 
-    // new message
-    socket.on('new message', (newMsg) => {
-      const chat = newMsg.chat;
-      if (!chat?._id) return;
-      socket.to(chat._id).emit('message received', newMsg);
+    // listen for a new message
+    socket.on('new message', (newMessage) => {
+      const chat = newMessage.chat;
+
+      if (!chat?.users) return;
+      
+      chat.users.forEach((user) => {
+        // sender should NOT receive notification
+        if (user._id.toString() === newMessage.sender._id.toString())
+          return;
+        // send message to each user's personal room
+        socket
+          .to(user._id.toString())
+          .emit('message received', newMessage);
+      });
     });
   });
 };
