@@ -1,5 +1,6 @@
 import { Chat } from '../models/ChatModel.js';
 import { Message } from '../models/MessageModel.js';
+import { Notification } from '../models/NotificationModel.js';
 import { ExpressError } from '../utils/ExpressError.js';
 import { StatusCodes } from 'http-status-codes';
 
@@ -88,6 +89,19 @@ const createMessage = async (req, res) => {
   await Chat.findByIdAndUpdate(chatId, {
     latestMessage: newMessage._id,
   });
+
+  // create notifications for all users except sender
+  const notificationPromises = chat.users
+    .filter((user) => user._id.toString() !== req.user.id)
+    .map((user) =>
+      Notification.create({
+        recipient: user._id,
+        message: newMessage._id,
+        chat: chatId,
+      })
+    );
+
+  await Promise.all(notificationPromises);
 
   res.status(StatusCodes.CREATED).json(newMessage);
 };

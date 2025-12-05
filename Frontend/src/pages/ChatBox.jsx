@@ -8,6 +8,7 @@ import {
   fetchChatMessages,
   sendMessage,
 } from '../service/MessageService.js';
+import { markChatNotificationsAsRead } from '../service/NotificationService.js';
 import showToast from '../utils/ToastHelper.js';
 import ChatHeader from '../components/ChatHeader.jsx';
 import ChatMessages from '../components/ChatMessages.jsx';
@@ -28,7 +29,7 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
   const [isTyping, setIsTyping] = useState(false);
 
   const typingTimeoutRef = useRef(null);
-  const activeChatRef = useRef(null); // useRef for active chat
+  const activeChatRef = useRef(null);
 
   const { selectedChat, notification, setNotification } = useChat();
   const { currentUser } = useAuth();
@@ -39,16 +40,19 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
       : { name: '', user: null };
 
   useEffect(() => {
-    activeChatRef.current = selectedChat; // update ref
+    activeChatRef.current = selectedChat;
     if (activeChatRef.current?._id && socket) {
       socket.emit('stop typing', activeChatRef.current._id);
       socket.emit('leave chat', activeChatRef.current._id);
     }
     fetchMessages();
+
+    // Mark notifications as read when entering chat
+    if (selectedChat?._id) {
+      markNotificationsRead(selectedChat._id);
+    }
   }, [selectedChat]);
-  useEffect(() => {
-    console.log('notification', notification);
-  }, [notification]);
+
   useEffect(() => {
     socket = io(ENDPOINT);
     socket.emit('setup', currentUser);
@@ -64,10 +68,23 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
         !activeChatRef.current ||
         activeChatRef.current._id !== newMsg.chat._id
       ) {
+        // Add to notification state (will be synced with backend)
         setNotification((prev) => {
-          const exists = prev.some((n) => n._id === newMsg._id);
+          const exists = prev.some(
+            (n) => n.message?._id === newMsg._id
+          );
           if (exists) return prev;
-          return [newMsg, ...prev];
+          // create notification object matching backend structure
+          return [
+            {
+              _id: `temp_${Date.now()}`, // temporary ID
+              message: newMsg,
+              chat: newMsg.chat,
+              recipient: currentUser._id,
+              isRead: false,
+            },
+            ...prev,
+          ];
         });
         setFetchAgain((prev) => !prev);
       } else {
@@ -91,7 +108,6 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
         setIsTyping(false);
     };
 
-    // register listeners
     socket.on('message received', messageHandler);
     socket.on('typing', typingHandler);
     socket.on('stop typing', stopTypingHandler);
@@ -102,12 +118,24 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
     };
   }, []);
 
+  // mark notifications as read
+  const markNotificationsRead = async (chatId) => {
+    try {
+      await markChatNotificationsAsRead(chatId, currentUser.token);
+      // remove notifications for this chat from state
+      setNotification((prev) =>
+        prev.filter((n) => n.chat?._id !== chatId)
+      );
+    } catch (error) {
+      console.error('Error marking notifications as read:', error);
+    }
+  };
+
   // get all messages
   const fetchMessages = async () => {
     if (!selectedChat) return;
     try {
       setLoading(true);
-      // leave the previous room
       if (activeChatRef.current?._id) {
         socket.emit('leave chat', activeChatRef.current._id);
       }
@@ -116,9 +144,8 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
         currentUser.token
       );
       setMessages(data);
-      // join new room
       socket.emit('join chat', selectedChat._id);
-      activeChatRef.current = selectedChat; // ← update ref
+      activeChatRef.current = selectedChat;
     } catch (error) {
       console.log(error);
       showToast(error, 'error');
@@ -171,7 +198,6 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
     >
       {selectedChat ? (
         <>
-          {/* chat header */}
           <ChatHeader
             selectedChat={selectedChat}
             otherUser={otherUser}
@@ -185,14 +211,12 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
             fetchMessages={fetchMessages}
           />
 
-          {/*chat body*/}
           <ChatMessages
             loading={loading}
             messages={messages}
             isTyping={isTyping}
           />
 
-          {/* input box */}
           <ChatInput
             newMessage={newMessage}
             typingHandler={typingHandler}

@@ -99,13 +99,19 @@ const removeUserFromGroupSchema = Joi.object({
   }).required(),
 });
 
-// allMessages schema (get messages by chatId)
+// define a reusable schema for chatId
+const chatIdParamSchema = Joi.object({
+  chatId: idField.messages({
+    'any.required': 'chatId is required',
+  }),
+});
+
+const markNotificationsAsReadSchema = Joi.object({
+  params: chatIdParamSchema,
+});
+
 const getChatMessagesSchema = Joi.object({
-  params: Joi.object({
-    chatId: idField.messages({
-      'any.required': 'chatId is required',
-    }),
-  }).required(),
+  params: chatIdParamSchema,
 });
 
 // sendMessage schema (send a new message)
@@ -130,6 +136,7 @@ export {
   updateGroupChatSchema,
   addUserToGroupSchema,
   removeUserFromGroupSchema,
+  markNotificationsAsReadSchema,
   getChatMessagesSchema,
   createMessageSchema,
 };

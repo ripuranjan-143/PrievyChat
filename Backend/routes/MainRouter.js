@@ -3,6 +3,7 @@ import express from 'express';
 import { userRouter } from './UserRouter.js';
 import { chatRouter } from './ChatRouter.js';
 import { messageRouter } from './MessageRouter.js';
+import { notificationRouter } from './NotificationRouter.js';
 
 const mainRouter = express.Router();
 
@@ -14,5 +15,8 @@ mainRouter.use('/chats', chatRouter);
 
 // message routes
 mainRouter.use('/messages', messageRouter);
+
+// notification routes
+mainRouter.use('/notifications', notificationRouter);
 
 export { mainRouter };

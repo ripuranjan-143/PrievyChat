@@ -1,27 +1,73 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+
 import { useAuth } from '../contexts/AuthContext.jsx';
 import ProfileModal from '../components/ProfileModal.jsx';
 import UserSearchDrawer from './UserSearchDrawer.jsx';
 import AvatarRow from '../components/AvatarRow.jsx';
 import { useChat } from '../contexts/ChatStateProvider';
 import { getSenderData } from '../utils/ChatLogics.js';
+import { markChatNotificationsAsRead } from '../service/NotificationService.js';
 
 function Navbar({ setFetchAgain }) {
   const [showProfile, setShowProfile] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showNotification, setShowNotification] = useState();
+  const [showNotification, setShowNotification] = useState(false);
 
   const { currentUser, handleLogout } = useAuth();
   const { setSelectedChat, notification, setNotification } =
     useChat();
-  useEffect(() => {
-    console.log('Navbar notifications:', notification);
-  }, [notification]);
+
+  // group notification by chat
+  const groupNotifications = (notifications) => {
+    const map = {};
+
+    notifications.forEach((n) => {
+      const key = n.chat._id;
+
+      if (!map[key]) {
+        map[key] = {
+          chat: n.chat,
+          sender: n.sender,
+          count: 1,
+        };
+      } else {
+        map[key].count += 1;
+      }
+    });
+
+    return Object.values(map);
+  };
+
+  // handle clicking on a notification
+  const handleNotificationClick = async (notif) => {
+    try {
+      await markChatNotificationsAsRead(
+        notif.chat._id,
+        currentUser.token
+      );
+
+      setNotification((prev) =>
+        prev.filter((n) => n.chat?._id !== notif.chat._id)
+      );
+
+      setSelectedChat(notif.chat);
+      setShowNotification(false);
+    } catch (error) {
+      console.error('Error handling notification click:', error);
+
+      setNotification((prev) =>
+        prev.filter((n) => n.chat?._id !== notif.chat._id)
+      );
+      setSelectedChat(notif.chat);
+      setShowNotification(false);
+    }
+  };
+
+  const grouped = groupNotifications(notification);
 
   return (
     <>
-      {/* invisible overlay (closes menu) */}
       {(showUserMenu || showNotification) && (
         <div
           onClick={() => {
@@ -38,6 +84,7 @@ function Navbar({ setFetchAgain }) {
           }}
         />
       )}
+
       <div className="d-flex justify-content-between px-4 py-2 bg-white">
         {/* left section */}
         <div
@@ -61,7 +108,7 @@ function Navbar({ setFetchAgain }) {
 
         {/* right section */}
         <div className="d-flex align-items-center">
-          {/* theme toggle */}
+          {/* theme */}
           <div
             className="me-3 p-1 hover-colour"
             style={{ borderRadius: '10px', cursor: 'pointer' }}
@@ -69,7 +116,7 @@ function Navbar({ setFetchAgain }) {
             <i className="fa-regular fa-sun"></i>
           </div>
 
-          {/* bell icon */}
+          {/* notification bell */}
           <div className="position-relative me-3">
             <button
               className="btn p-1 position-relative hover-colour"
@@ -110,32 +157,34 @@ function Navbar({ setFetchAgain }) {
                   </p>
                 )}
 
-                {notification.map((notif) => {
+                {/* render group notifications */}
+                {grouped.map((g) => {
                   const { name } = getSenderData(
                     currentUser,
-                    notif.chat.users,
-                    notif.chat.isGroupChat,
-                    notif.chat.chatName
+                    g.chat.users,
+                    g.chat.isGroupChat,
+                    g.chat.chatName
                   );
 
                   return (
                     <button
-                      key={notif._id}
-                      className="dropdown-item hover-colour btn-hover-colour px-2 py-1 rounded mt-1"
-                      style={{ whiteSpace: 'normal' }}
-                      onClick={() => {
-                        setSelectedChat(notif.chat);
-                        setNotification(
-                          notification.filter(
-                            (n) => n._id !== notif._id
-                          )
-                        );
-                        setShowNotification(false);
-                      }}
+                      key={g.chat._id}
+                      className="dropdown-item hover-colour btn-hover-colour px-2 py-1 rounded mt-1 d-flex justify-content-between align-items-center"
+                      onClick={() => handleNotificationClick(g)}
                     >
-                      {notif.chat.isGroupChat
-                        ? `New Message in ${name}`
-                        : `New Message from ${name}`}
+                      <span>
+                        {g.chat.isGroupChat
+                          ? `New Message in ${name}`
+                          : `New Message from ${name}`}
+                      </span>
+
+                      {/* count */}
+                      <span
+                        className="badge bg-danger"
+                        style={{ fontSize: '11px' }}
+                      >
+                        {g.count}
+                      </span>
                     </button>
                   );
                 })}
@@ -143,7 +192,7 @@ function Navbar({ setFetchAgain }) {
             )}
           </div>
 
-          {/* custom user dropdown */}
+          {/* user dropdown */}
           <div className="position-relative">
             <div onClick={() => setShowUserMenu(!showUserMenu)}>
               <AvatarRow
@@ -152,7 +201,6 @@ function Navbar({ setFetchAgain }) {
               />
             </div>
 
-            {/* dropdown menu */}
             {showUserMenu && (
               <div
                 className="shadow-lg p-2 bg-white mt-2"
@@ -188,12 +236,10 @@ function Navbar({ setFetchAgain }) {
         </div>
       </div>
 
-      {/* profile modal */}
       {showProfile && (
         <ProfileModal show={showProfile} setShow={setShowProfile} />
       )}
 
-      {/* search drawer */}
       {showSearch && (
         <UserSearchDrawer
           showSearch={showSearch}
