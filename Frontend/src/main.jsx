@@ -6,15 +6,18 @@ import ProjectRoutes from './ProjectRoutes.jsx';
 import GlobalToaster from './components/GlobalToaster.jsx';
 import { AuthProvider } from './contexts/AuthContext.jsx';
 import { ChatStateProvider } from './contexts/ChatStateProvider.jsx';
+import { SocketProvider } from './contexts/SocketContext.jsx';
 
 createRoot(document.getElementById('root')).render(
   <>
     <GlobalToaster />
     <BrowserRouter>
       <AuthProvider>
-        <ChatStateProvider>
-          <ProjectRoutes />
-        </ChatStateProvider>
+        <SocketProvider>
+          <ChatStateProvider>
+            <ProjectRoutes />
+          </ChatStateProvider>
+        </SocketProvider>
       </AuthProvider>
     </BrowserRouter>
   </>

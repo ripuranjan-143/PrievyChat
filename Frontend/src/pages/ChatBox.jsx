@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import io from 'socket.io-client';
 
 import { useChat } from '../contexts/ChatStateProvider';
 import { useAuth } from '../contexts/AuthContext';
+import { useSocket } from '../contexts/SocketContext';
 import { getSenderData } from '../utils/ChatLogics.js';
 import {
   fetchChatMessages,
@@ -15,69 +15,74 @@ import ChatMessages from '../components/ChatMessages.jsx';
 import ChatInput from '../components/ChatInput.jsx';
 import createTypingHandler from '../utils/TypingHandler.js';
 
-const ENDPOINT = 'http://localhost:8080';
-let socket;
-
 function ChatBox({ fetchAgain, setFetchAgain }) {
   const [loading, setLoading] = useState(false);
   const [groupchat, setGroupChat] = useState(false);
   const [singleChat, setSingleChat] = useState(false);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const [socketConnected, setSocketConnected] = useState(false);
   const [typing, setTyping] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
 
   const typingTimeoutRef = useRef(null);
   const activeChatRef = useRef(null);
 
-  const { selectedChat, notification, setNotification } = useChat();
+  const { selectedChat, setNotification } = useChat();
   const { currentUser } = useAuth();
+  const { socket, socketConnected } = useSocket();
 
   const { name: otherName, user: otherUser } =
     selectedChat && !selectedChat.isGroupChat
       ? getSenderData(currentUser, selectedChat.users)
       : { name: '', user: null };
 
+  // handle chat selection and room management
   useEffect(() => {
-    activeChatRef.current = selectedChat;
+    // reset typing indicator when changing chats
+    setIsTyping(false);
+
+    // clear any pending typing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
+
+    // leave previous chat room and stop typing
     if (activeChatRef.current?._id && socket) {
       socket.emit('stop typing', activeChatRef.current._id);
       socket.emit('leave chat', activeChatRef.current._id);
     }
-    fetchMessages();
 
-    // Mark notifications as read when entering chat
-    if (selectedChat?._id) {
+    // update active chat reference
+    activeChatRef.current = selectedChat;
+
+    // fetch messages for new chat
+    if (selectedChat) {
+      fetchMessages();
       markNotificationsRead(selectedChat._id);
     }
-  }, [selectedChat]);
+    setNewMessage('');
+  }, [selectedChat, socket]);
 
-  useEffect(() => {
-    socket = io(ENDPOINT);
-    socket.emit('setup', currentUser);
-    socket.on('connected', () => setSocketConnected(true));
-    return () => socket.disconnect();
-  }, [currentUser]);
-
-  // listen for incoming messages
+  // setup socket event listeners
   useEffect(() => {
     if (!socket) return;
-    const messageHandler = (newMsg) => {
-      if (
-        !activeChatRef.current ||
-        activeChatRef.current._id !== newMsg.chat._id
-      ) {
-        // Add to notification state (will be synced with backend)
+
+    // listen for incoming messages
+    const handleMessageReceived = (newMsg) => {
+      const activeChat = activeChatRef.current;
+
+      // if message is NOT for current chat, add to notifications
+      if (!activeChat || activeChat._id !== newMsg.chat._id) {
         setNotification((prev) => {
           const exists = prev.some(
             (n) => n.message?._id === newMsg._id
           );
           if (exists) return prev;
-          // create notification object matching backend structure
+
           return [
             {
-              _id: `temp_${Date.now()}`, // temporary ID
+              _id: `temp_${Date.now()}`,
               message: newMsg,
               chat: newMsg.chat,
               recipient: currentUser._id,
@@ -88,63 +93,80 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
         });
         setFetchAgain((prev) => !prev);
       } else {
+        // message is for current chat, add to messages
         setMessages((prev) => [...prev, newMsg]);
       }
     };
 
-    const typingHandler = (roomId) => {
-      if (
-        activeChatRef.current &&
-        activeChatRef.current._id === roomId
-      )
+    // listen for typing indicators
+    const handleTyping = (roomId) => {
+      const activeChat = activeChatRef.current;
+      // only show typing if roomId matches current chat
+      if (activeChat && activeChat._id === roomId) {
         setIsTyping(true);
+      }
     };
 
-    const stopTypingHandler = (roomId) => {
-      if (
-        activeChatRef.current &&
-        activeChatRef.current._id === roomId
-      )
+    const handleStopTyping = (roomId) => {
+      const activeChat = activeChatRef.current;
+      // only hide typing if roomId matches current chat
+      if (activeChat && activeChat._id === roomId) {
         setIsTyping(false);
+      }
     };
 
-    socket.on('message received', messageHandler);
-    socket.on('typing', typingHandler);
-    socket.on('stop typing', stopTypingHandler);
+    // register event listeners
+    socket.on('message received', handleMessageReceived);
+    socket.on('typing', handleTyping);
+    socket.on('stop typing', handleStopTyping);
+
+    // cleanup listeners on unmount
     return () => {
-      socket.off('message received', messageHandler);
-      socket.off('typing', typingHandler);
-      socket.off('stop typing', stopTypingHandler);
+      socket.off('message received', handleMessageReceived);
+      socket.off('typing', handleTyping);
+      socket.off('stop typing', handleStopTyping);
+    };
+  }, [socket, currentUser, setNotification, setFetchAgain]);
+
+  // cleanup typing timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
     };
   }, []);
 
-  // mark notifications as read
+  // mark notifications as read for current chat
   const markNotificationsRead = async (chatId) => {
     try {
       await markChatNotificationsAsRead(chatId, currentUser.token);
-      // remove notifications for this chat from state
       setNotification((prev) =>
         prev.filter((n) => n.chat?._id !== chatId)
       );
     } catch (error) {
-      console.error('Error marking notifications as read:', error);
+      console.error(error);
     }
   };
 
-  // get all messages
+  // fetch all messages for selected chat
   const fetchMessages = async () => {
     if (!selectedChat) return;
+
     try {
       setLoading(true);
-      if (activeChatRef.current?._id) {
-        socket.emit('leave chat', activeChatRef.current._id);
-      }
+
       const data = await fetchChatMessages(
         selectedChat._id,
         currentUser.token
       );
       setMessages(data);
-      socket.emit('join chat', selectedChat._id);
+
+      // join new chat room
+      if (socket) {
+        socket.emit('join chat', selectedChat._id);
+      }
+
       activeChatRef.current = selectedChat;
     } catch (error) {
       console.log(error);
@@ -154,29 +176,43 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
     }
   };
 
-  // send messages
+  // send a new message
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedChat?._id) return;
-    socket.emit('stop typing', selectedChat._id);
+
+    // stop typing indicator
+    if (socket) {
+      socket.emit('stop typing', selectedChat._id);
+    }
+
     try {
       const data = await sendMessage(
         newMessage.trim(),
         selectedChat._id,
         currentUser.token
       );
-      socket.emit('new message', data);
+
+      // emit new message to other users
+      if (socket) {
+        socket.emit('new message', data);
+      }
+
       setMessages((prev) => [...prev, data]);
       setNewMessage('');
+      setTyping(false);
     } catch (error) {
+      console.error(error);
       showToast(error, 'error');
     }
   };
 
   const handleKeyPress = (event) => {
-    if (event.key === 'Enter' && newMessage) handleSendMessage();
+    if (event.key === 'Enter' && newMessage.trim()) {
+      handleSendMessage();
+    }
   };
 
-  // typing handler
+  // handle typing with debounce
   const typingHandler = createTypingHandler(
     socket,
     socketConnected,
@@ -226,7 +262,7 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
         </>
       ) : (
         <div className="d-flex flex-column align-items-center justify-content-center text-center h-100">
-          <h4>Hi! Welcome to PrievyChat App.</h4>
+          <h4>Hi! Welcome to EchoMeet App.</h4>
           <p>Click on a user/group to start chatting</p>
         </div>
       )}

@@ -8,7 +8,11 @@ import {
 } from '../service/UserService.js';
 import showToast from '../utils/ToastHelper.js';
 
-const UserSearchDrawer = ({ showSearch, setShowSearch }) => {
+const UserSearchDrawer = ({
+  showSearch,
+  setShowSearch,
+  setFetchAgain,
+}) => {
   const [search, setSearch] = useState('');
   const [searchResult, setSearchResult] = useState([]);
   const [loading, setLoading] = useState(false);
