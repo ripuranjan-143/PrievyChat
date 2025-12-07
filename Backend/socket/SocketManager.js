@@ -1,3 +1,6 @@
+// store online users: { userId: socketId }
+const onlineUsers = new Map();
+
 const connectToSocket = (io) => {
   io.on('connection', (socket) => {
     let userId = null;
@@ -12,6 +15,16 @@ const connectToSocket = (io) => {
 
       userId = userData._id;
       socket.join(userId);
+
+      // mark user as online
+      onlineUsers.set(userId, socket.id);
+
+      // broadcast to all clients that this user is online
+      io.emit('user-online', userId);
+
+      // send current online users to the newly connected user
+      socket.emit('online-users', Array.from(onlineUsers.keys()));
+
       socket.emit('connected');
     });
 
@@ -88,6 +101,14 @@ const connectToSocket = (io) => {
         'Reason:',
         reason
       );
+
+      if (userId) {
+        // remove user from online users
+        onlineUsers.delete(userId);
+
+        // broadcast to all clients that this user is offline
+        io.emit('user-offline', userId);
+      }
     });
 
     // handle connection errors

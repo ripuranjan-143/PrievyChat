@@ -23,6 +23,7 @@ export const useSocket = () => {
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [socketConnected, setSocketConnected] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState([]);
   const { currentUser } = useAuth();
   const socketRef = useRef(null);
 
@@ -35,6 +36,7 @@ export const SocketProvider = ({ children }) => {
         socketRef.current = null;
         setSocket(null);
         setSocketConnected(false);
+        setOnlineUsers([]);
       }
       return;
     }
@@ -58,8 +60,28 @@ export const SocketProvider = ({ children }) => {
       setSocketConnected(true);
     });
 
+    // receive initial list of online users
+    newSocket.on('online-users', (users) => {
+      setOnlineUsers(users);
+    });
+
+    // when a user comes online
+    newSocket.on('user-online', (userId) => {
+      setOnlineUsers((prev) => {
+        if (!prev.includes(userId)) {
+          return [...prev, userId];
+        }
+        return prev;
+      });
+    });
+
+    // when a user goes offline
+    newSocket.on('user-offline', (userId) => {
+      setOnlineUsers((prev) => prev.filter((id) => id !== userId));
+    });
+
     newSocket.on('disconnect', () => {
-      console.log('❌ Socket disconnected');
+      console.log('Socket disconnected');
       setSocketConnected(false);
     });
 
@@ -69,23 +91,23 @@ export const SocketProvider = ({ children }) => {
     });
 
     newSocket.on('reconnect_attempt', (attemptNumber) => {
-      console.log(`🔄 Reconnection attempt ${attemptNumber}...`);
+      console.log(`Reconnection attempt ${attemptNumber}...`);
     });
 
     newSocket.on('reconnect', (attemptNumber) => {
-      console.log(`✅ Reconnected after ${attemptNumber} attempts`);
+      console.log(`Reconnected after ${attemptNumber} attempts`);
       // re-setup user when reconnected
       newSocket.emit('setup', currentUser);
       setSocketConnected(true);
     });
 
     newSocket.on('reconnect_failed', () => {
-      console.error('❌ Reconnection failed after all attempts');
+      console.error('Reconnection failed after all attempts');
       setSocketConnected(false);
     });
 
     newSocket.on('error', (error) => {
-      console.error('❌ Socket error:', error);
+      console.error('Socket error:', error);
     });
 
     // cleanup on unmount or user change
@@ -100,6 +122,7 @@ export const SocketProvider = ({ children }) => {
   const value = {
     socket,
     socketConnected,
+    onlineUsers,
   };
 
   return (

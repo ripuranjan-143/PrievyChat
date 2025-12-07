@@ -53,12 +53,12 @@ const MyChats = ({ fetchAgain }) => {
         }}
       >
         {chats.length === 0 ? (
-          // When array exists but is empty
+          // when array exists but is empty
           <div className="d-flex ps-2 fs-5 justify-content-center align-items-center h-100 w-100">
             <p>Search a user to start the chat</p>
           </div>
         ) : (
-          // When chats exist
+          // when chats exist
           <div
             style={{
               maxHeight: '100%',
@@ -71,15 +71,23 @@ const MyChats = ({ fetchAgain }) => {
               if (!chat || !chat.users) return null;
 
               // get sender data for private chat
-              const { name: otherName } = !chat.isGroupChat
-                ? getSenderData(currentUser, chat.users)
-                : { name: chat.chatName, user: null };
+              const { name: otherName, user: otherUser } =
+                !chat.isGroupChat
+                  ? getSenderData(currentUser, chat.users)
+                  : { name: chat.chatName, user: null };
+
+              // get profile picture
+              const profilePic = chat.isGroupChat
+                ? chat.picture ||
+                  'https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg'
+                : otherUser?.picture ||
+                  'https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg';
 
               return (
                 <div
                   key={chat._id}
                   onClick={() => setSelectedChat(chat)}
-                  className="rounded mb-2 px-4 pt-3"
+                  className="rounded mb-2 px-3 py-2 d-flex align-items-center"
                   style={{
                     cursor: 'pointer',
                     background:
@@ -89,7 +97,17 @@ const MyChats = ({ fetchAgain }) => {
                     color: selectedChat === chat ? 'white' : 'black',
                   }}
                 >
-                  <p>{otherName}</p>
+                  <img
+                    src={profilePic}
+                    alt={otherName}
+                    className="rounded-circle me-3"
+                    style={{
+                      width: '45px',
+                      height: '45px',
+                      objectFit: 'cover',
+                    }}
+                  />
+                  <span className="fw-semibold">{otherName}</span>
                 </div>
               );
             })}

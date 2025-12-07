@@ -1,6 +1,8 @@
 import AvatarRow from './AvatarRow';
 import ProfileModal from './ProfileModal';
 import GroupChatSettingsModal from '../pages/GroupChatSettingsModal.jsx';
+import { useSocket } from '../contexts/SocketContext';
+import { useAuth } from '../contexts/AuthContext';
 
 function ChatHeader({
   selectedChat,
@@ -14,6 +16,26 @@ function ChatHeader({
   setFetchAgain,
   fetchMessages,
 }) {
+  const { onlineUsers } = useSocket();
+  const { currentUser } = useAuth();
+
+  // check if other user is online (for single chat)
+  const isOtherUserOnline = otherUser
+    ? onlineUsers.includes(otherUser._id)
+    : false;
+
+  // check if any user in group is online (excluding current user)
+  const isGroupOnline =
+    selectedChat?.isGroupChat &&
+    selectedChat?.users?.some(
+      (user) =>
+        user._id !== currentUser._id && onlineUsers.includes(user._id)
+    );
+
+  const showOnlineStatus = selectedChat?.isGroupChat
+    ? isGroupOnline
+    : isOtherUserOnline;
+
   return (
     <>
       {/* chat header */}
@@ -31,6 +53,8 @@ function ChatHeader({
                 img={otherUser?.picture}
                 name={otherName}
                 className="ms-3"
+                isOnline={isOtherUserOnline}
+                showStatus={true}
               />
             </div>
 
@@ -50,6 +74,8 @@ function ChatHeader({
                 img={selectedChat?.picture}
                 name={selectedChat.chatName.toUpperCase()}
                 className="ms-3"
+                isOnline={isGroupOnline}
+                showStatus={true}
               />
             </div>
 
