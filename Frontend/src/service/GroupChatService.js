@@ -41,11 +41,24 @@ const addUserToGroup = async (chatId, userId, token) => {
   }
 };
 
-const createGroupChat = async (name, users, token) => {
+const createGroupChat = async (name, users, token, picture) => {
   try {
     const { data } = await axios.post(
       `${server}/chats/group`,
-      { name, users },
+      { name, users, picture },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return data;
+  } catch (error) {
+    throw formatApiError(error);
+  }
+};
+
+const updateGroupPicture = async (chatId, picture, token) => {
+  try {
+    const { data } = await axios.put(
+      `${server}/chats/group/update-picture`,
+      { chatId, picture },
       { headers: { Authorization: `Bearer ${token}` } }
     );
     return data;
@@ -59,4 +72,5 @@ export {
   removeUserFromGroup,
   addUserToGroup,
   createGroupChat,
+  updateGroupPicture,
 };

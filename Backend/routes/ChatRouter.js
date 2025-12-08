@@ -16,6 +16,7 @@ import {
   updateGroupChatName,
   addUserToGroupChat,
   removeUserFromGroupChat,
+  updateGroupChatPicture,
 } from '../controllers/ChatController.js';
 const chatRouter = express.Router();
 
@@ -60,6 +61,13 @@ chatRouter.put(
   verifyToken,
   validateSchema(removeUserFromGroupSchema),
   wrapAsync(removeUserFromGroupChat)
+);
+
+// update group chat picture
+chatRouter.put(
+  '/group/update-picture',
+  verifyToken,
+  wrapAsync(updateGroupChatPicture)
 );
 
 export { chatRouter };

@@ -59,7 +59,11 @@ function ChatScrollView({ messages }) {
                   data-bs-toggle="tooltip"
                   data-bs-placement="bottom"
                   title={m.sender.name}
-                  style={{ marginTop: '7px', cursor: 'pointer' }}
+                  style={{
+                    marginTop: '7px',
+                    cursor: 'pointer',
+                    objectFit: 'cover',
+                  }}
                 />
               )}
 

@@ -66,7 +66,7 @@ const getUserChats = async (req, res) => {
 };
 
 const createNewGroupChat = async (req, res) => {
-  const { users, name } = req.body;
+  const { users, name, picture } = req.body;
   const loggedInUserId = req.user.id;
 
   // users array comes from frontend
@@ -103,6 +103,7 @@ const createNewGroupChat = async (req, res) => {
     users: finalUsers,
     isGroupChat: true,
     groupAdmin: loggedInUserId,
+    picture: picture,
   });
 
   // Populate before sending response
@@ -280,6 +281,46 @@ const removeUserFromGroupChat = async (req, res) => {
   return res.status(StatusCodes.OK).json(updatedChat);
 };
 
+const updateGroupChatPicture = async (req, res) => {
+  const { chatId, picture } = req.body;
+
+  // fetch chat with minimal fields
+  const chat = await Chat.findById(chatId).select(
+    'isGroupChat groupAdmin'
+  );
+
+  if (!chat) {
+    throw new ExpressError(StatusCodes.NOT_FOUND, 'Chat not found');
+  }
+
+  // only update picture for group chats
+  if (!chat.isGroupChat) {
+    throw new ExpressError(
+      StatusCodes.BAD_REQUEST,
+      'You can update picture only for group chats'
+    );
+  }
+
+  // validate admin
+  if (chat.groupAdmin.toString() !== req.user.id) {
+    throw new ExpressError(
+      StatusCodes.FORBIDDEN,
+      'Only the group admin can update the group picture'
+    );
+  }
+
+  // update & populate
+  const updatedChat = await Chat.findByIdAndUpdate(
+    chatId,
+    { picture },
+    { new: true }
+  )
+    .populate('users', '-password')
+    .populate('groupAdmin', '-password');
+
+  return res.status(StatusCodes.OK).json(updatedChat);
+};
+
 export {
   getOrCreateOneToOneChat,
   getUserChats,
@@ -287,4 +328,5 @@ export {
   updateGroupChatName,
   addUserToGroupChat,
   removeUserFromGroupChat,
+  updateGroupChatPicture,
 };

@@ -96,3 +96,10 @@ body {
 .chat-scroll::-webkit-scrollbar-thumb:hover {
   background-color: #4fb5ae; /* darker on hover */
 }
+
+/* group chat modal */
+.profile-pic-wrapper-ht {
+  height: 136px !important;
+  width: 120px !important;
+  min-width: 140px !important;
+}

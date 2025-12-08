@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import axios from 'axios';
-import server from '../config/api.js';
 import { useChat } from '../contexts/ChatStateProvider.jsx';
 import showToast from '../utils/ToastHelper.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { searchUsers } from '../service/UserService.js';
 import { createGroupChat } from '../service/GroupChatService.js';
+import { uploadProfileImage } from '../service/AuthService.js';
 
 function GroupChatModal({ showGroup, setShowGroup }) {
   // don't render if modal hidden
@@ -16,18 +15,22 @@ function GroupChatModal({ showGroup, setShowGroup }) {
   const [search, setSearch] = useState('');
   const [searchResult, setSearchResult] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [pictureLoading, setPictureLoading] = useState(false);
+  const [selectedPicture, setSelectedPicture] = useState(null);
+  const [previewPicture, setPreviewPicture] = useState('');
+  const [submitLoading, setSubmitLoading] = useState(false);
 
   const { currentUser } = useAuth();
   const { chats, setChats, setSelectedChat } = useChat();
 
-  // search users from backend
+  // search user
   const handleSearch = async (query) => {
+    setSearch(query);
     if (!query.trim()) {
       setSearchResult([]);
-      showToast('Please enter something to search', 'error');
       return;
     }
-    setSearch(query);
+
     try {
       setLoading(true);
       const users = await searchUsers(query, currentUser.token);
@@ -39,7 +42,6 @@ function GroupChatModal({ showGroup, setShowGroup }) {
     }
   };
 
-  // remove user from selected users
   const handleDelete = (delUser) => {
     setSelectedUsers(
       selectedUsers.filter((u) => u._id !== delUser._id)
@@ -54,23 +56,29 @@ function GroupChatModal({ showGroup, setShowGroup }) {
     }
     setSelectedUsers([...selectedUsers, userToAdd]);
     setSearch('');
+    setSearchResult([]);
   };
 
-  // create new group chat
+  // submit for creating a new group chat
   const handleSubmit = async () => {
     if (!groupChatName.trim() || selectedUsers.length === 0) {
       showToast('All fields are required!', 'warn');
       return;
     }
+
     try {
+      setSubmitLoading(true);
+      let groupPictureUrl = '';
+      if (selectedPicture) {
+        groupPictureUrl = await uploadProfileImage(selectedPicture);
+      }
       const newChat = await createGroupChat(
         groupChatName.trim(),
         selectedUsers.map((u) => u._id),
-        currentUser.token
+        currentUser.token,
+        groupPictureUrl
       );
-      // reset and close modal
       setChats([newChat, ...chats]);
-      // redirect to this new chat
       setSelectedChat(newChat);
       setShowGroup(false);
       showToast('New Group Chat Created!', 'success');
@@ -80,17 +88,38 @@ function GroupChatModal({ showGroup, setShowGroup }) {
       setSearchResult([]);
     } catch (error) {
       showToast(error, 'error');
+    } finally {
+      setSubmitLoading(false);
     }
+  };
+
+  // select picture
+  const handlePictureSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!['image/jpeg', 'image/png'].includes(file.type)) {
+      showToast('Only JPG or PNG allowed!', 'error');
+      return;
+    }
+
+    if (file.size > 1 * 1024 * 1024) {
+      showToast('File size must be less than 1MB!', 'error');
+      return;
+    }
+
+    setSelectedPicture(file);
+    setPreviewPicture(URL.createObjectURL(file));
   };
 
   return (
     <>
-      {/* Backdrop */}
       <div className="modal-backdrop fade show"></div>
-
-      {/* Modal */}
       <div className="modal fade show d-block" tabIndex="-1">
-        <div className="modal-dialog modal-dialog-centered">
+        <div
+          className="modal-dialog modal-dialog-centered"
+          style={{ maxWidth: '600px' }}
+        >
           <div className="modal-content border-0 shadow-lg">
             <div className="modal-header position-relative border-black">
               <h4
@@ -107,29 +136,77 @@ function GroupChatModal({ showGroup, setShowGroup }) {
               ></button>
             </div>
 
-            {/* body */}
-            <div className="modal-body">
-              <div className="mb-3 mt-3">
-                <input
-                  className="form-control border-dark"
-                  placeholder="Chat Name"
-                  onChange={(e) => setGroupChatName(e.target.value)}
-                />
+            {/* LEFT + RIGHT LAYOUT */}
+            <div className="d-flex px-3 mt-3">
+              {/* LEFT SIDE - GROUP PICTURE */}
+              <div className="me-4">
+                <div
+                  className="profile-pic-wrapper profile-pic-wrapper-ht position-relative m-2"
+                  style={{ width: '60px', height: '120px' }}
+                >
+                  <img
+                    src={
+                      previewPicture ||
+                      'https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg'
+                    }
+                    alt="Group"
+                    style={{
+                      objectFit: 'cover',
+                      width: '100%',
+                      height: '100%',
+                    }}
+                  />
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePictureSelect}
+                    className="position-absolute top-0 start-0 w-100 h-100 opacity-0"
+                    style={{ cursor: 'pointer' }}
+                    disabled={pictureLoading}
+                    id="groupPictureInput"
+                  />
+                  <div className="overlay d-flex justify-content-center align-items-center">
+                    <span className="text-white fs-2">+</span>
+                  </div>
+                </div>
+                <small className="text-muted d-block text-center my-2">
+                  Click to select
+                </small>
               </div>
 
-              {/* input search users */}
-              <div>
-                <input
-                  className="form-control border-dark"
-                  placeholder="Add Users eg: ranjan, ripu"
-                  value={search}
-                  onChange={(e) => handleSearch(e.target.value)}
-                />
+              {/* RIGHT SIDE */}
+              <div className="flex-grow-1 mt-2">
+                <div className="modal-body">
+                  <div className="mb-3 mt-1">
+                    <input
+                      value={groupChatName}
+                      className="form-control border-dark"
+                      placeholder="Chat Name"
+                      onChange={(e) =>
+                        setGroupChatName(e.target.value)
+                      }
+                    />
+                  </div>
+
+                  {/* input search users */}
+                  <div>
+                    <input
+                      className="form-control border-dark"
+                      placeholder="Add Users eg: ranjan, ripu"
+                      value={search}
+                      onChange={(e) => handleSearch(e.target.value)}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* show selected users as badges */}
-            <div className="d-flex flex-wrap gap-2 mb-3 mx-4">
+            <div
+              className="d-flex flex-wrap gap-2 mb-5 me-2"
+              style={{ marginLeft: '2rem' }}
+            >
               {selectedUsers.map((u) => (
                 <span
                   key={u._id}
@@ -145,8 +222,8 @@ function GroupChatModal({ showGroup, setShowGroup }) {
               ))}
             </div>
 
-            {/* search user list */}
-            <div className="list-group mx-3">
+            {/* show results */}
+            <div className="list-group mx-4">
               {loading ? (
                 <div className="d-flex ps-2 fs-5 justify-content-center align-items-center h-100 w-100">
                   <p>Loading...</p>
@@ -161,7 +238,11 @@ function GroupChatModal({ showGroup, setShowGroup }) {
                     >
                       <div className="d-flex align-items-center">
                         <img
-                          src={u.picture}
+                          src={
+                            u.picture && u.picture.trim() !== ''
+                              ? u.picture
+                              : 'https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg'
+                          }
                           alt={u.name}
                           className="rounded-circle me-3"
                           style={{
@@ -190,16 +271,14 @@ function GroupChatModal({ showGroup, setShowGroup }) {
               )}
             </div>
 
-            {/* footer */}
-            <div className="modal-footer border-0">
+            <div className="modal-footer border-0 mx-2">
               <button
-                style={{
-                  backgroundColor: '#38B2AC',
-                }}
-                className="btn text-white w-100 btn-hover-colour"
+                style={{ backgroundColor: '#38B2AC' }}
+                className="btn text-white w-100"
                 onClick={handleSubmit}
+                disabled={submitLoading}
               >
-                Create Chat
+                {submitLoading ? 'Creating...' : 'Create Chat'}
               </button>
             </div>
           </div>

@@ -66,6 +66,7 @@ const createGroupChatSchema = Joi.object({
           'At least 2 users are required to create a group chat',
         'array.base': 'Users must be an array of user IDs',
       }),
+    picture: Joi.string().uri().allow('', null).optional(),
   }).required(),
 });
 

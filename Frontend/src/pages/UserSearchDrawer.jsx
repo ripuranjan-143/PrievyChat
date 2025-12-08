@@ -31,12 +31,12 @@ const UserSearchDrawer = ({
 
   // search user
   const handleSearch = async (query) => {
+    setSearch(query);
     if (!query.trim()) {
       setSearchResult([]);
-      showToast('Please enter something to search', 'error');
       return;
     }
-    setSearch(query);
+
     setLoading(true);
     try {
       const users = await searchUsers(query, currentUser.token);
