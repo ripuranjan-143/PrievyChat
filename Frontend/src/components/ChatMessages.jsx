@@ -1,5 +1,5 @@
 import { FadeLoader } from 'react-spinners';
-import ChatScrollView from '../pages/ChatScrollView';
+import ChatScrollView from '../pages/MessageScrollView.jsx';
 import TypingIndicator from './TypingIndicator';
 
 function ChatMessages({ loading, messages, isTyping }) {

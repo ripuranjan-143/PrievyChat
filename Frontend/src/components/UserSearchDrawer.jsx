@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
+
 import { useAuth } from '../contexts/AuthContext.jsx';
-import { useChat } from '../contexts/ChatStateProvider.jsx';
+import { useChat } from '../contexts/ChatContext.jsx';
 import { RotateLoader } from 'react-spinners';
 import {
   searchUsers,

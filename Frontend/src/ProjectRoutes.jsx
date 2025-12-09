@@ -4,7 +4,7 @@ import AuthPage from '../src/pages/auth/AuthPage.jsx';
 import ProfileSetup from '../src/pages/auth/ProfileSetup.jsx';
 import ChatPage from '../src/pages/ChatPage.jsx';
 import { useAuth } from './contexts/AuthContext.jsx';
-import NotFound from './pages/NotFound.jsx';
+import NotFoundPage from './pages/NotFoundPage.jsx';
 import './index.css';
 
 function ProjectRoutes() {
@@ -41,7 +41,7 @@ function ProjectRoutes() {
     // catch-all route for undefined paths
     {
       path: '*',
-      element: <NotFound />,
+      element: <NotFoundPage />,
     },
   ]);
   return <div className="appContainer">{routes}</div>;

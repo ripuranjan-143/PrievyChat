@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { useChat } from '../contexts/ChatStateProvider.jsx';
+import { useChat } from '../contexts/ChatContext.jsx';
 import showToast from '../utils/ToastHelper.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { searchUsers } from '../service/UserService.js';
-import { createGroupChat } from '../service/GroupChatService.js';
-import { uploadProfileImage } from '../service/AuthService.js';
+import { createGroupChat } from '../service/ChatService.js';
+import { uploadProfileImage } from '../service/UserService.js';
 import useImagePicker from '../hooks/useImagePicker.js';
 
-function GroupChatModal({ showGroup, setShowGroup }) {
+function CreateGroupModal({ showGroup, setShowGroup }) {
   // don't render if modal hidden
   if (!showGroup) return null;
 
@@ -280,4 +280,4 @@ function GroupChatModal({ showGroup, setShowGroup }) {
   );
 }
 
-export default GroupChatModal;
+export default CreateGroupModal;

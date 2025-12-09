@@ -1,6 +1,6 @@
 import AvatarRow from './AvatarRow';
 import ProfileModal from './ProfileModal';
-import GroupChatSettingsModal from '../pages/GroupChatSettingsModal.jsx';
+import GroupChatSettingsModal from '../pages/GroupSettingsModal.jsx';
 import { useSocket } from '../contexts/SocketContext';
 import { useAuth } from '../contexts/AuthContext';
 

@@ -6,7 +6,7 @@ import { useAuth } from '../../contexts/AuthContext.jsx';
 import {
   uploadProfileImage,
   signupUser,
-} from '../../service/AuthService.js';
+} from '../../service/UserService.js';
 import useImagePicker from '../../hooks/useImagePicker.js';
 import './ProfileSetup.css';
 

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import showToast from '../utils/ToastHelper';
-import { uploadProfileImage } from '../service/AuthService';
-import { updateUserProfileAPI } from '../service/UserService';
+import { uploadProfileImage } from '../service/UserService.js';
+import { updateUserProfileAPI } from '../service/UserService.js';
 import useImagePicker from '../hooks/useImagePicker.js';
 
 const ProfileModal = ({ show, setShow, user }) => {

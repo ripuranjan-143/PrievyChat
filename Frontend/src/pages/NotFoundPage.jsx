@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../contexts/AuthContext.jsx';
 
-const NotFound = () => {
+const NotFoundPage = () => {
   const { currentUser } = useAuth();
 
   const navigate = useNavigate();
@@ -27,4 +27,4 @@ const NotFound = () => {
   );
 };
 
-export default NotFound;
+export default NotFoundPage;

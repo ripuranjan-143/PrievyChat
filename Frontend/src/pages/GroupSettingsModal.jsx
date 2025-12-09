@@ -1,19 +1,19 @@
 import { useState } from 'react';
 
 import showToast from '../utils/ToastHelper.js';
-import { useChat } from '../contexts/ChatStateProvider.jsx';
+import { useChat } from '../contexts/ChatContext.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import {
   renameGroup,
   removeUserFromGroup,
   addUserToGroup,
   updateGroupPicture,
-} from '../service/GroupChatService.js';
+} from '../service/ChatService.js';
 import { searchUsers } from '../service/UserService.js';
-import { uploadProfileImage } from '../service/AuthService.js';
+import { uploadProfileImage } from '../service/UserService.js';
 import useImagePicker from '../hooks/useImagePicker.js';
 
-function GroupChatSettingsModal({
+function GroupSettingsModal({
   fetchAgain,
   setFetchAgain,
   fetchMessages,
@@ -379,4 +379,4 @@ function GroupChatSettingsModal({
   );
 }
 
-export default GroupChatSettingsModal;
+export default GroupSettingsModal;

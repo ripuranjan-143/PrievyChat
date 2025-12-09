@@ -1,14 +1,14 @@
 import { useState } from 'react';
 
 import { useAuth } from '../contexts/AuthContext.jsx';
-import ProfileModal from '../components/ProfileModal.jsx';
+import ProfileModal from './ProfileModal.jsx';
 import UserSearchDrawer from './UserSearchDrawer.jsx';
-import AvatarRow from '../components/AvatarRow.jsx';
-import { useChat } from '../contexts/ChatStateProvider';
-import { getSenderData } from '../utils/ChatLogics.js';
+import AvatarRow from './AvatarRow.jsx';
+import { useChat } from '../contexts/ChatContext.jsx';
+import { getSenderData } from '../utils/ChatHelper.js';
 import { markChatNotificationsAsRead } from '../service/NotificationService.js';
 
-function Navbar({ setFetchAgain }) {
+function NavigationBar({ setFetchAgain }) {
   const [showProfile, setShowProfile] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -251,4 +251,4 @@ function Navbar({ setFetchAgain }) {
   );
 }
 
-export default Navbar;
+export default NavigationBar;

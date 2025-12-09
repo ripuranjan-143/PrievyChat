@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import './Auth.css';
 import showToast from '../../utils/ToastHelper.js';
 import { useAuth } from '../../contexts/AuthContext.jsx';
-import { loginUser } from '../../service/AuthService.js';
+import { loginUser } from '../../service/UserService.js';
 
 const Login = () => {
   const [email, setEmail] = useState('');

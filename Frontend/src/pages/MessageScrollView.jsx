@@ -4,10 +4,10 @@ import {
   isMessageFromDifferentSender,
   getMessageMargin,
   isPreviousMessageSameUser,
-} from '../utils/ChatLogics';
+} from '../utils/ChatHelper.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 
-function ChatScrollView({ messages }) {
+function MessageScrollView({ messages }) {
   const { currentUser } = useAuth();
   const scrollRef = useRef();
 
@@ -104,4 +104,4 @@ function ChatScrollView({ messages }) {
   );
 }
 
-export default ChatScrollView;
+export default MessageScrollView;

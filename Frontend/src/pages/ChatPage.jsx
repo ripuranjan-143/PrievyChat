@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import Navbar from './Navbar.jsx';
-import MyChats from './MyChats.jsx';
-import ChatBox from './ChatBox.jsx';
+import Navbar from '../components/NavigationBar.jsx';
+import MyChats from './ChatList.jsx';
+import ChatBox from './ChatContainer.jsx';
 import { useAuth } from '../../src/contexts/AuthContext.jsx';
 
 function ChatPage() {

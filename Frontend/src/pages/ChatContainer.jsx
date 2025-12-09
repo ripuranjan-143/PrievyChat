@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 
-import { useChat } from '../contexts/ChatStateProvider';
-import { useAuth } from '../contexts/AuthContext';
-import { useSocket } from '../contexts/SocketContext';
-import { getSenderData } from '../utils/ChatLogics.js';
+import { useChat } from '../contexts/ChatContext.jsx';
+import { useAuth } from '../contexts/AuthContext.jsx';
+import { useSocket } from '../contexts/SocketContext.jsx';
+import { getSenderData } from '../utils/ChatHelper.js';
 import {
   fetchChatMessages,
   sendMessage,
@@ -15,7 +15,7 @@ import ChatMessages from '../components/ChatMessages.jsx';
 import ChatInput from '../components/ChatInput.jsx';
 import createTypingHandler from '../utils/TypingHandler.js';
 
-function ChatBox({ fetchAgain, setFetchAgain }) {
+function ChatContainer({ fetchAgain, setFetchAgain }) {
   const [loading, setLoading] = useState(false);
   const [groupchat, setGroupChat] = useState(false);
   const [singleChat, setSingleChat] = useState(false);
@@ -270,4 +270,4 @@ function ChatBox({ fetchAgain, setFetchAgain }) {
   );
 }
 
-export default ChatBox;
+export default ChatContainer;

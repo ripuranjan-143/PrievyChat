@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
+
 import { useAuth } from '../contexts/AuthContext.jsx';
-import { useChat } from '../contexts/ChatStateProvider.jsx';
+import { useChat } from '../contexts/ChatContext.jsx';
 import showToast from '../utils/ToastHelper.js';
-import { getSenderData } from '../utils/ChatLogics.js';
-import GroupChatModal from './GroupChatModal.jsx';
+import { getSenderData } from '../utils/ChatHelper.js';
+import GroupChatModal from './CreateGroupModal.jsx';
 import { fetchChatsService } from '../service/ChatService.js';
 
-const MyChats = ({ fetchAgain }) => {
+const ChatList = ({ fetchAgain }) => {
   const [showGroupchat, setShowGroupchat] = useState(false);
 
   const { currentUser } = useAuth();
@@ -125,4 +126,4 @@ const MyChats = ({ fetchAgain }) => {
   );
 };
 
-export default MyChats;
+export default ChatList;
