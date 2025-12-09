@@ -54,6 +54,15 @@ export const AuthProvider = ({ children }) => {
     await fetchUser(token);
   };
 
+  // update user profile locally without refetching
+  const updateUserProfile = (name, picture) => {
+    setCurrentUser((prev) => ({
+      ...prev,
+      name,
+      picture,
+    }));
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     setCurrentUser(null);
@@ -66,6 +75,7 @@ export const AuthProvider = ({ children }) => {
       currentUser,
       userLoading,
       authenticateUser,
+      updateUserProfile,
       handleLogout,
     }),
     [currentUser, userLoading]

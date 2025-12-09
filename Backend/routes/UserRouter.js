@@ -7,11 +7,13 @@ import {
   allUsers,
   getUserById,
   deleteUserById,
+  updateUserProfile,
 } from '../controllers/UserController.js';
 import {
   signupSchema,
   loginSchema,
   deleteUserByIdSchema,
+  updateUserProfileSchema,
 } from '../utils/Schema.js';
 import { validateSchema } from '../utils/ValidateSchema.js';
 import { verifyToken } from '../utils/AuthMiddleware.js';
@@ -37,6 +39,14 @@ userRouter.get('/', verifyToken, wrapAsync(allUsers));
 
 // get user details
 userRouter.get('/me', verifyToken, wrapAsync(getUserById));
+
+// update user profile (name and picture)
+userRouter.put(
+  '/me',
+  verifyToken,
+  validateSchema(updateUserProfileSchema),
+  wrapAsync(updateUserProfile)
+);
 
 // delete user by ID
 userRouter.delete(

@@ -114,6 +114,45 @@ const getUserById = async (req, res) => {
   });
 };
 
+const updateUserProfile = async (req, res) => {
+  const { name, picture } = req.body;
+
+  // find the user
+  const user = await User.findById(req.user.id);
+  if (!user) {
+    throw new ExpressError(StatusCodes.NOT_FOUND, 'User not found!');
+  }
+
+  let isUpdated = false;
+
+  // update fields if provided
+  if (name && name.trim() !== user.name) {
+    user.name = name.trim();
+    isUpdated = true;
+  }
+
+  if (picture && picture !== user.picture) {
+    user.picture = picture;
+    isUpdated = true;
+  }
+
+  if (!isUpdated) {
+    return res.status(StatusCodes.OK).json({
+      message: 'No changes made!',
+    });
+  }
+  // save updated user
+  await user.save();
+
+  res.status(StatusCodes.OK).json({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    picture: user.picture,
+    message: 'Profile updated successfully!',
+  });
+};
+
 const deleteUserById = async (req, res) => {
   // only allow logged-in user to delete their own account
   if (req.user.id !== req.params.id) {
@@ -150,4 +189,11 @@ const deleteUserById = async (req, res) => {
   });
 };
 
-export { signup, login, allUsers, getUserById, deleteUserById };
+export {
+  signup,
+  login,
+  allUsers,
+  getUserById,
+  updateUserProfile,
+  deleteUserById,
+};

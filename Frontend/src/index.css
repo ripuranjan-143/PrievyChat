@@ -103,3 +103,9 @@ body {
   width: 120px !important;
   min-width: 140px !important;
 }
+
+.profile-pic-wrapper-ht-user {
+  height: 156px !important;
+  width: 160px !important;
+  min-width: 140px !important;
+}

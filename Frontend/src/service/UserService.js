@@ -28,4 +28,17 @@ const accessChatWithUser = async (userId, token) => {
   }
 };
 
-export { searchUsers, accessChatWithUser };
+const updateUserProfileAPI = async (name, picture, token) => {
+  try {
+    const { data } = await axios.put(
+      `${server}/users/me`,
+      { name, picture },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return data;
+  } catch (error) {
+    throw formatApiError(error);
+  }
+};
+
+export { searchUsers, accessChatWithUser, updateUserProfileAPI };

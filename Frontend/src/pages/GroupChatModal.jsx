@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 import { searchUsers } from '../service/UserService.js';
 import { createGroupChat } from '../service/GroupChatService.js';
 import { uploadProfileImage } from '../service/AuthService.js';
+import useImagePicker from '../hooks/useImagePicker.js';
 
 function GroupChatModal({ showGroup, setShowGroup }) {
   // don't render if modal hidden
@@ -22,6 +23,11 @@ function GroupChatModal({ showGroup, setShowGroup }) {
 
   const { currentUser } = useAuth();
   const { chats, setChats, setSelectedChat } = useChat();
+
+  const { handleImageChange } = useImagePicker(
+    setSelectedPicture,
+    setPreviewPicture
+  );
 
   // search user
   const handleSearch = async (query) => {
@@ -93,23 +99,10 @@ function GroupChatModal({ showGroup, setShowGroup }) {
     }
   };
 
-  // select picture
+  // select pic
   const handlePictureSelect = (e) => {
     const file = e.target.files[0];
-    if (!file) return;
-
-    if (!['image/jpeg', 'image/png'].includes(file.type)) {
-      showToast('Only JPG or PNG allowed!', 'error');
-      return;
-    }
-
-    if (file.size > 1 * 1024 * 1024) {
-      showToast('File size must be less than 1MB!', 'error');
-      return;
-    }
-
-    setSelectedPicture(file);
-    setPreviewPicture(URL.createObjectURL(file));
+    handleImageChange(file);
   };
 
   return (
@@ -146,8 +139,7 @@ function GroupChatModal({ showGroup, setShowGroup }) {
                 >
                   <img
                     src={
-                      previewPicture ||
-                      'https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg'
+                      previewPicture || 'anonymous-avatar-icon-25.jpg'
                     }
                     alt="Group"
                     style={{

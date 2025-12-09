@@ -1,4 +1,5 @@
 import { useState } from 'react';
+
 import showToast from '../utils/ToastHelper.js';
 import { useChat } from '../contexts/ChatStateProvider.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
@@ -10,6 +11,7 @@ import {
 } from '../service/GroupChatService.js';
 import { searchUsers } from '../service/UserService.js';
 import { uploadProfileImage } from '../service/AuthService.js';
+import useImagePicker from '../hooks/useImagePicker.js';
 
 function GroupChatSettingsModal({
   fetchAgain,
@@ -29,6 +31,11 @@ function GroupChatSettingsModal({
 
   const { currentUser } = useAuth();
   const { selectedChat, setSelectedChat, setChats } = useChat();
+
+  const { handleImageChange } = useImagePicker(
+    setSelectedPicture,
+    setPreviewPicture
+  );
 
   const isAdmin = selectedChat?.groupAdmin?._id === currentUser._id;
 
@@ -141,23 +148,10 @@ function GroupChatSettingsModal({
     }
   };
 
-  // select the picture
+  // select pic
   const handlePictureSelect = (e) => {
     const file = e.target.files[0];
-    if (!file) return;
-
-    if (!['image/jpeg', 'image/png'].includes(file.type)) {
-      showToast('Only JPG or PNG allowed!', 'error');
-      return;
-    }
-
-    if (file.size > 1 * 1024 * 1024) {
-      showToast('File size must be less than 1MB!', 'error');
-      return;
-    }
-
-    setSelectedPicture(file);
-    setPreviewPicture(URL.createObjectURL(file));
+    handleImageChange(file);
   };
 
   // update picture

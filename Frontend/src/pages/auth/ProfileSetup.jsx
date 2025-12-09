@@ -7,8 +7,9 @@ import {
   uploadProfileImage,
   signupUser,
 } from '../../service/AuthService.js';
-
+import useImagePicker from '../../hooks/useImagePicker.js';
 import './ProfileSetup.css';
+
 function ProfileSetup() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -32,21 +33,10 @@ function ProfileSetup() {
   }, []);
 
   // handle image selection
-  const handleImageChange = async (file) => {
-    if (!file) return;
-
-    if (!['image/jpeg', 'image/png'].includes(file.type)) {
-      showToast('Only JPG or PNG allowed!', 'error');
-      return;
-    }
-
-    if (file.size > 1 * 1024 * 1024) {
-      showToast('File size must be less than 1MB!', 'error');
-      return;
-    }
-    setPicture(file);
-    setPreview(URL.createObjectURL(file));
-  };
+  const { handleImageChange } = useImagePicker(
+    setPicture,
+    setPreview
+  );
 
   // save the user details / signup
   const handleSave = async () => {

@@ -24,6 +24,7 @@ const signupSchema = Joi.object({
   body: Joi.object({
     name: nameField.required(),
     email: emailField.required(),
+    picture: Joi.string().uri().optional().allow('', null),
     password: passwordField.required(),
   }).required(),
 });
@@ -128,6 +129,22 @@ const createMessageSchema = Joi.object({
   }).required(),
 });
 
+// update user profile schema
+const updateUserProfileSchema = Joi.object({
+  body: Joi.object({
+    name: nameField.optional(),
+    picture: Joi.string().uri().optional().messages({
+      'string.uri': 'Picture must be a valid URL',
+    }),
+  })
+    .min(1)
+    .required()
+    .messages({
+      'object.min':
+        'At least one field (name or picture) is required',
+    }),
+});
+
 export {
   signupSchema,
   loginSchema,
@@ -140,4 +157,5 @@ export {
   markNotificationsAsReadSchema,
   getChatMessagesSchema,
   createMessageSchema,
+  updateUserProfileSchema,
 };
