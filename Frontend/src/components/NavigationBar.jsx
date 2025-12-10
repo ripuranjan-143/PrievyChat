@@ -42,10 +42,7 @@ function NavigationBar({ setFetchAgain }) {
   // handle clicking on a notification
   const handleNotificationClick = async (notif) => {
     try {
-      await markChatNotificationsAsRead(
-        notif.chat._id,
-        currentUser.token
-      );
+      await markChatNotificationsAsRead(notif.chat._id);
 
       setNotification((prev) =>
         prev.filter((n) => n.chat?._id !== notif.chat._id)

@@ -1,88 +1,47 @@
-import axios from 'axios';
-import server from '../config/api';
-import formatApiError from '../utils/FormatApiError.js';
+import axiosInstance from '../config/axiosInstance.js';
 
-const fetchChatsService = async (token) => {
-  try {
-    const { data } = await axios.get(`${server}/chats`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return data;
-  } catch (error) {
-    throw formatApiError(error);
-  }
+export const fetchChatsService = async () => {
+  const { data } = await axiosInstance.get('/chats');
+  return data;
 };
 
-const renameGroup = async (chatId, chatName, token) => {
-  try {
-    const { data } = await axios.put(
-      `${server}/chats/group/rename`,
-      { chatId, chatName },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    return data;
-  } catch (error) {
-    throw formatApiError(error);
-  }
+export const renameGroup = async (chatId, chatName) => {
+  const { data } = await axiosInstance.put('/chats/group/rename', {
+    chatId,
+    chatName,
+  });
+  return data;
 };
 
-const removeUserFromGroup = async (chatId, userId, token) => {
-  try {
-    const { data } = await axios.put(
-      `${server}/chats/group/remove-user`,
-      { chatId, userId },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    return data;
-  } catch (error) {
-    throw formatApiError(error);
-  }
+export const removeUserFromGroup = async (chatId, userId) => {
+  const { data } = await axiosInstance.put('/chats/group/remove-user', {
+    chatId,
+    userId,
+  });
+  return data;
 };
 
-const addUserToGroup = async (chatId, userId, token) => {
-  try {
-    const { data } = await axios.put(
-      `${server}/chats/group/add-user`,
-      { chatId, userId },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    return data;
-  } catch (error) {
-    throw formatApiError(error);
-  }
+export const addUserToGroup = async (chatId, userId) => {
+  const { data } = await axiosInstance.put('/chats/group/add-user', {
+    chatId,
+    userId,
+  });
+  return data;
 };
 
-const createGroupChat = async (name, users, token, picture) => {
-  try {
-    const { data } = await axios.post(
-      `${server}/chats/group`,
-      { name, users, picture },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    return data;
-  } catch (error) {
-    throw formatApiError(error);
-  }
+export const createGroupChat = async (name, users, picture) => {
+  const { data } = await axiosInstance.post('/chats/group', {
+    name,
+    users,
+    picture,
+  });
+  return data;
 };
 
-const updateGroupPicture = async (chatId, picture, token) => {
-  try {
-    const { data } = await axios.put(
-      `${server}/chats/group/update-picture`,
-      { chatId, picture },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    return data;
-  } catch (error) {
-    throw formatApiError(error);
-  }
-};
-
-export {
-  fetchChatsService,
-  renameGroup,
-  removeUserFromGroup,
-  addUserToGroup,
-  createGroupChat,
-  updateGroupPicture,
+export const updateGroupPicture = async (chatId, picture) => {
+  const { data } = await axiosInstance.put('/chats/group/update-picture', {
+    chatId,
+    picture,
+  });
+  return data;
 };

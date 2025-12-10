@@ -27,9 +27,7 @@ export const ChatStateProvider = ({ children }) => {
     const loadNotifications = async () => {
       if (currentUser?.token) {
         try {
-          const notifications = await fetchNotifications(
-            currentUser.token
-          );
+          const notifications = await fetchNotifications();
           setNotification(notifications);
         } catch (error) {
           console.error('Error loading notifications:', error);

@@ -53,11 +53,7 @@ const ProfileModal = ({ show, setShow, user }) => {
         uploadedImageUrl = await uploadProfileImage(picture);
       }
 
-      await updateUserProfileAPI(
-        name.trim(),
-        uploadedImageUrl,
-        currentUser.token
-      );
+      await updateUserProfileAPI(name.trim(), uploadedImageUrl);
       // update the user in context with new data
       updateUserProfile(name.trim(), uploadedImageUrl);
       showToast('Profile updated successfully!', 'success');

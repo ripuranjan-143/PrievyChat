@@ -7,8 +7,9 @@ import {
 } from 'react';
 import io from 'socket.io-client';
 import { useAuth } from './AuthContext';
+import { SOCKET_URL } from '../config/config.js';
 
-const ENDPOINT = 'http://localhost:8080';
+const ENDPOINT = SOCKET_URL;
 
 const SocketContext = createContext();
 

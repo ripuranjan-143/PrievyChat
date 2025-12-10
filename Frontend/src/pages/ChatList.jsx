@@ -16,7 +16,7 @@ const ChatList = ({ fetchAgain }) => {
 
   const fetchChats = async () => {
     try {
-      const data = await fetchChatsService(currentUser.token);
+      const data = await fetchChatsService();
       setChats(data);
     } catch (error) {
       showToast(error, 'error');

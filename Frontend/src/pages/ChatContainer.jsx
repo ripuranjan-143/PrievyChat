@@ -140,7 +140,7 @@ function ChatContainer({ fetchAgain, setFetchAgain }) {
   // mark notifications as read for current chat
   const markNotificationsRead = async (chatId) => {
     try {
-      await markChatNotificationsAsRead(chatId, currentUser.token);
+      await markChatNotificationsAsRead(chatId);
       setNotification((prev) =>
         prev.filter((n) => n.chat?._id !== chatId)
       );
@@ -156,10 +156,7 @@ function ChatContainer({ fetchAgain, setFetchAgain }) {
     try {
       setLoading(true);
 
-      const data = await fetchChatMessages(
-        selectedChat._id,
-        currentUser.token
-      );
+      const data = await fetchChatMessages(selectedChat._id);
       setMessages(data);
 
       // join new chat room
@@ -188,8 +185,7 @@ function ChatContainer({ fetchAgain, setFetchAgain }) {
     try {
       const data = await sendMessage(
         newMessage.trim(),
-        selectedChat._id,
-        currentUser.token
+        selectedChat._id
       );
 
       // emit new message to other users

@@ -49,8 +49,7 @@ function GroupSettingsModal({
       setRenameLoading(true);
       const data = await renameGroup(
         selectedChat._id,
-        groupChatName,
-        currentUser.token
+        groupChatName
       );
       setSelectedChat(data);
       setChats((prevChats) =>
@@ -80,8 +79,7 @@ function GroupSettingsModal({
       setLoading(true);
       const data = await removeUserFromGroup(
         selectedChat._id,
-        removeUser._id,
-        currentUser.token
+        removeUser._id
       );
       if (removeUser._id === currentUser._id) {
         setSelectedChat();
@@ -113,8 +111,7 @@ function GroupSettingsModal({
       setLoading(true);
       const data = await addUserToGroup(
         selectedChat._id,
-        addUser._id,
-        currentUser.token
+        addUser._id
       );
       setSelectedChat(data);
       setFetchAgain(!fetchAgain);
@@ -139,7 +136,7 @@ function GroupSettingsModal({
 
     setLoading(true);
     try {
-      const users = await searchUsers(query, currentUser.token);
+      const users = await searchUsers(query);
       setSearchResult(users);
     } catch (error) {
       showToast(error, 'error');
@@ -168,8 +165,7 @@ function GroupSettingsModal({
       );
       const data = await updateGroupPicture(
         selectedChat._id,
-        uploadedImageUrl,
-        currentUser.token
+        uploadedImageUrl
       );
       setSelectedChat(data);
       setChats((prevChats) =>

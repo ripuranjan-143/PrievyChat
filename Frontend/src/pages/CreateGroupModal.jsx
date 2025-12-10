@@ -39,7 +39,7 @@ function CreateGroupModal({ showGroup, setShowGroup }) {
 
     try {
       setLoading(true);
-      const users = await searchUsers(query, currentUser.token);
+      const users = await searchUsers(query);
       setSearchResult(users);
     } catch (error) {
       showToast(error, 'error');
@@ -81,7 +81,6 @@ function CreateGroupModal({ showGroup, setShowGroup }) {
       const newChat = await createGroupChat(
         groupChatName.trim(),
         selectedUsers.map((u) => u._id),
-        currentUser.token,
         groupPictureUrl
       );
       setChats([newChat, ...chats]);

@@ -40,7 +40,7 @@ const UserSearchDrawer = ({
 
     setLoading(true);
     try {
-      const users = await searchUsers(query, currentUser.token);
+      const users = await searchUsers(query);
       setSearchResult(users);
     } catch (error) {
       showToast(error, 'error');
@@ -66,10 +66,7 @@ const UserSearchDrawer = ({
   const accessChat = async (userId) => {
     setLoadingChat(true);
     try {
-      const chat = await accessChatWithUser(
-        userId,
-        currentUser.token
-      );
+      const chat = await accessChatWithUser(userId);
       if (chat && !chats.find((c) => c._id === chat._id)) {
         setChats([chat, ...chats]);
       }

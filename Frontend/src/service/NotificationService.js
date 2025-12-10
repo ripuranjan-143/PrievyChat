@@ -1,32 +1,13 @@
-import axios from 'axios';
+import axiosInstance from '../config/axiosInstance.js';
 
-import server from '../config/api.js';
-import formatApiError from '../utils/FormatApiError.js';
-
-// get all unread notifications
-const fetchNotifications = async (token) => {
-  try {
-    const { data } = await axios.get(`${server}/notifications`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return data;
-  } catch (error) {
-    throw formatApiError(error);
-  }
+export const fetchNotifications = async () => {
+  const { data } = await axiosInstance.get('/notifications');
+  return data;
 };
 
-// mark unread notifications
-const markChatNotificationsAsRead = async (chatId, token) => {
-  try {
-    const { data } = await axios.put(
-      `${server}/notifications/chat/${chatId}/read`,
-      {},
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    return data;
-  } catch (error) {
-    throw formatApiError(error);
-  }
+export const markChatNotificationsAsRead = async (chatId) => {
+  const { data } = await axiosInstance.put(
+    `/notifications/chat/${chatId}/read`
+  );
+  return data;
 };
-
-export { fetchNotifications, markChatNotificationsAsRead };

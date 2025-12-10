@@ -6,9 +6,8 @@ import {
   useMemo,
 } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { FadeLoader } from 'react-spinners';
-import server from '../config/api.js';
+import axiosInstance from '../config/axiosInstance.js';
 import showToast from '../utils/ToastHelper.js';
 
 const AuthContext = createContext();
@@ -26,9 +25,7 @@ export const AuthProvider = ({ children }) => {
   const fetchUser = async (token) => {
     setUserLoading(true);
     try {
-      const res = await axios.get(`${server}/users/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axiosInstance.get('/users/me');
       setCurrentUser({ ...res.data, token });
     } catch (err) {
       console.error('Error fetching user data:', err);
