@@ -1,7 +1,6 @@
 # PrievyChat 💬
 
-PrievyChat – A full-stack real-time chat application with one-to-one and group messaging, built using the MERN stack and Socket.IO.
-
+PrievyChat – Real-time chat application supporting private and group conversations, persistent messaging, online/offline presence, and media sharing, built with the MERN stack and Socket.IO.
 ---
 
 ## Tech Stack
